@@ -1,0 +1,549 @@
+:root {
+    --card-width: 80px;
+    --card-height: 112px;
+    --fire: #ff4757;
+    --water: #1e90ff;
+    --nature: #2ed573;
+    --light: #f1c40f;
+    --darkness: #8e44ad;
+    --card-stack-offset: 40px;
+    /* Define a custom property for offset (increased) */
+}
+
+body {
+    font-family: sans-serif;
+    background: #1a1a1a;
+    color: white;
+    margin: 0;
+    overflow-y: auto;
+}
+
+.game-view {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+    min-height: 100vh;
+}
+
+.player-area {
+    display: flex;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    height: auto;
+}
+
+/* --- 相手(P2)エリアの鏡合わせ設定 --- */
+#p2-area .zones-container {
+    flex-direction: column-reverse;
+    /* 子要素の並び順を逆転させる */
+}
+
+/* 相手側のデッキ・墓地パネルも逆転させる（任意：お好みで） */
+#p2-area .side-panel {
+    flex-direction: column-reverse;
+}
+
+/* ゾーンのタイトル位置を微調整（重なり防止） */
+.zone-title {
+    position: absolute;
+    top: 6px;
+    left: 12px;
+    font-size: 11px;
+    color: #888;
+    font-weight: bold;
+    z-index: 10;
+}
+
+.zones-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Reduced gap */
+
+.battle-shield-row {
+    display: flex;
+    gap: 5px;
+    /* Spacing between battle and shield zones */
+    flex-grow: 1;
+    /* Allow to fill available space */
+    align-items: stretch;
+    /* Make items stretch to fill the height */
+}
+
+#p1-area .battle-shield-row {
+    /* P1のバトル・シールドゾーンの並びを反転 */
+    flex-direction: row-reverse;
+}
+
+/* For shield zones */
+#p1-shield-zone,
+#p2-shield-zone {
+    padding: 0;
+    /* Remove padding to maximize space */
+}
+
+
+.zone {
+    display: flex;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.4);
+    position: relative;
+    padding: 10px 5px 5px;
+    flex-wrap: wrap;
+    border-radius: 8px;
+    border: 1px dashed #444;
+}
+
+#p1-area #p1-battle-zone,
+#p2-area #p2-battle-zone {
+    flex-grow: 2;
+    /* バトルゾーンの横幅の比率を維持 */
+    height: auto;
+    /* 縦幅を親コンテナに合わせて自動調整 */
+    min-height: var(--card-height);
+    /* カード1枚分の最小高さを確保 */
+}
+
+#p1-area #p1-shield-zone,
+#p2-area #p2-shield-zone {
+    flex-grow: 1;
+    /* シールドゾーンの横幅の比率を維持 */
+    height: auto;
+    /* 縦幅を親コンテナに合わせて自動調整 */
+    min-height: var(--card-height);
+    /* カード1枚分の最小高さを確保 */
+}
+
+#p1-mana-zone,
+#p2-mana-zone {
+    height: var(--card-height);
+    /* マナゾーンの高さをカードと同じに設定 */
+}
+
+#p1-hand-zone,
+#p2-hand-zone {
+    min-height: var(--card-height);
+    /* ハンドゾーンが潰れないように最小高さを設定 */
+}
+
+.zone-title {
+    position: absolute;
+    top: 6px;
+    left: 12px;
+    font-size: 11px;
+    color: #888;
+    font-weight: bold;
+}
+
+/* カードとコスト表示のスタイル */
+.card {
+    width: var(--card-width);
+    height: var(--card-height);
+    border-radius: 6px;
+    cursor: grab;
+    position: relative;
+    padding: 15px 8px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    box-sizing: border-box;
+    background: #333;
+}
+
+.card-name {
+    margin-top: 5px;
+    line-height: 1.2;
+    word-break: break-all;
+}
+
+/* コストバッジの基本スタイル */
+.card-cost {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    /* 基本は白文字 */
+    z-index: 20;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+    border: 1px solid #fff;
+}
+
+/* 文明ごとの色指定 */
+.card.fire .card-cost {
+    background: #e74c3c;
+    border-color: #ff7675;
+}
+
+/* 赤 */
+.card.water .card-cost {
+    background: #2980b9;
+    border-color: #74b9ff;
+}
+
+/* 青 */
+.card.nature .card-cost {
+    background: #27ae60;
+    border-color: #55efc4;
+}
+
+/* 緑 */
+.card.darkness .card-cost {
+    background: #2d3436;
+    border-color: #636e72;
+}
+
+/* 黒 */
+.card.light .card-cost {
+    background: #f1c40f;
+    border-color: #000;
+    color: #000;
+}
+
+/* 黄色 (文字は黒) */
+
+.card.fire {
+    border: 2px solid var(--fire);
+}
+
+.card.water {
+    border: 2px solid var(--water);
+}
+
+.card.nature {
+    border: 2px solid var(--nature);
+}
+
+.card.light {
+    border: 2px solid var(--light);
+    color: #000;
+    background: #fdf9e1;
+}
+
+.card.light .card-cost {
+    background: var(--light);
+    color: #000;
+    border-color: #000;
+}
+
+.card.darkness {
+    border: 2px solid var(--darkness);
+}
+
+.card.tapped {
+    transform: rotate(90deg);
+    margin: 0 15px;
+    filter: brightness(0.7);
+}
+
+.card.facedown {
+    background: #2c3e50 !important;
+    border: 2px solid #7f8c8d !important;
+    color: transparent !important;
+}
+
+.card.facedown .card-cost {
+    display: none;
+}
+
+/* 裏向きならコストは隠す */
+
+/* Shield Card Stack Styles */
+#p1-shield-zone .card,
+#p2-shield-zone .card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    /* Remove any default margins */
+    z-index: 1;
+    /* Base z-index */
+    border: 1px solid #7f8c8d;
+    /* Shields are facedown */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    /* Add shadow for depth */
+}
+
+/* Apply offset for each card in the stack using :nth-child */
+#p1-shield-zone .card:nth-child(2),
+#p2-shield-zone .card:nth-child(2) {
+    transform: translate(var(--card-stack-offset), 0);
+    z-index: 2;
+}
+
+#p1-shield-zone .card:nth-child(3),
+#p2-shield-zone .card:nth-child(3) {
+    transform: translate(calc(var(--card-stack-offset) * 2), 0);
+    z-index: 3;
+}
+
+#p1-shield-zone .card:nth-child(4),
+#p2-shield-zone .card:nth-child(4) {
+    transform: translate(calc(var(--card-stack-offset) * 3), 0);
+    z-index: 4;
+}
+
+#p1-shield-zone .card:nth-child(5),
+#p2-shield-zone .card:nth-child(5) {
+    transform: translate(calc(var(--card-stack-offset) * 4), 0);
+    z-index: 5;
+}
+
+#p1-shield-zone .card:nth-child(6),
+#p2-shield-zone .card:nth-child(6) {
+    transform: translate(calc(var(--card-stack-offset) * 5), 0);
+    z-index: 6;
+}
+
+#p1-shield-zone .card:nth-child(7),
+#p2-shield-zone .card:nth-child(7) {
+    transform: translate(calc(var(--card-stack-offset) * 6), 0);
+    z-index: 7;
+}
+
+#p1-shield-zone .card:nth-child(8),
+#p2-shield-zone .card:nth-child(8) {
+    transform: translate(calc(var(--card-stack-offset) * 7), 0);
+    z-index: 8;
+}
+
+#p1-shield-zone .card:nth-child(9),
+#p2-shield-zone .card:nth-child(9) {
+    transform: translate(calc(var(--card-stack-offset) * 8), 0);
+    z-index: 9;
+}
+
+#p1-shield-zone .card:nth-child(10),
+#p2-shield-zone .card:nth-child(10) {
+    transform: translate(calc(var(--card-stack-offset) * 9), 0);
+    z-index: 10;
+}
+
+.card-container {
+    position: relative;
+    width: var(--card-width);
+    height: var(--card-height);
+}
+
+/* 重ねられた下のカードを少し暗く、またはズラして表示 */
+.card.evolved-under {
+    position: absolute;
+    top: 10px;
+    /* 下のカードを少し見せる */
+    z-index: 1;
+    filter: brightness(0.6);
+}
+
+.card.evolution-top {
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.side-panel {
+    width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    border-left: 1px solid #333;
+    padding-left: 15px;
+}
+
+.deck-stack {
+    width: 70px;
+    height: 98px;
+    background: #2c3e50;
+    border: 2px solid #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 5px;
+    font-size: 18px;
+}
+
+.graveyard {
+    width: 70px;
+    height: 98px;
+    border: 2px dashed #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e74c3c;
+    font-size: 24px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.view-btn {
+    width: 80px;
+    padding: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    background: #e67e22;
+    border: none;
+    color: white;
+    border-radius: 4px;
+}
+
+.center-bar {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+    gap: 30px;
+    border-radius: 10px;
+    border: 1px solid #444;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lobby-content {
+    background: #222;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid #444;
+    width: 380px;
+}
+
+.viewer-content {
+    background: #222;
+    width: 85%;
+    height: 85%;
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e67e22;
+}
+
+#deck-contents {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    align-content: flex-start;
+}
+
+#preview-modal {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    width: 320px;
+    /* 横幅を拡張 */
+    max-height: 85vh;
+    /* 画面からはみ出さないように制限 */
+    overflow-y: auto;
+    /* テキストが多い場合はスクロール */
+    background: rgba(10, 10, 10, 0.95);
+    /* より深く重厚な背景 */
+    border: 2px solid #e67e22;
+    /* 枠線を少し太く */
+    padding: 20px;
+    z-index: 5000;
+    border-radius: 12px;
+    display: none;
+    pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    /* 浮き出たような影 */
+}
+
+#pre-name {
+    font-size: 18px;
+    /* 名前を大きく */
+    color: #e67e22;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #444;
+}
+
+#pre-text {
+    font-size: 14px;
+    /* テキストを読みやすいサイズに */
+    line-height: 1.6;
+    /* 行間を広げて視認性アップ */
+    white-space: pre-wrap;
+    color: #eee;
+}
+
+.pre-race {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+/* Deck Context Menu Styles */
+.context-menu {
+    position: fixed;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    z-index: 6000;
+    /* Above other modals */
+    display: none;
+    /* Hidden by default */
+    padding: 5px 0;
+    min-width: 160px;
+}
+
+.context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.context-menu ul li {
+    padding: 8px 15px;
+    cursor: pointer;
+    color: #eee;
+    font-size: 14px;
+}
+
+.context-menu ul li:hover {
+    background-color: #555;
+    color: #fff;
+}
+
+/* シールド番号のスタイル */
+.shield-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 20;
+}
