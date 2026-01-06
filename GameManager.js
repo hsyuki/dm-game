@@ -110,26 +110,36 @@ class GameManager {
     }
 
     // デッキの特定位置からカードを移動（サーチ用）
-    moveCardFromDeck(name, cardId, targetZone, shouldShuffle = true) { // cardId を受け取る
-        const p = this.findP(name);
-        const cardIndex = p.deck.findIndex(card => card.id === cardId); // id でインデックスを探す
+    moveCardFromDeck(name, cardId, targetZone, shouldShuffle = true, deckOwnerName = null, targetPlayerName = null) {
+        // カードの持ち主（山札の持ち主）
+        const ownerName = deckOwnerName || name;
+        const owner = this.findP(ownerName);
+        if (!owner) return;
 
-        if (cardIndex !== -1) { // カードが見つかったら
-            const card = p.deck.splice(cardIndex, 1)[0]; // cardIndex で splice
+        // カードを探す
+        const cardIndex = owner.deck.findIndex(c => c.id === cardId);
 
-            // 指定のゾーンへ追加（Player.jsの配列名と一致させる）
-            if (targetZone === 'hand') p.hand.push(card);
-            else if (targetZone === 'manaZone') p.manaZone.push(card);
-            else if (targetZone === 'battleZone') p.battleZone.push(card);
-            else if (targetZone === 'graveyard') p.graveyard.push(card);
-            else if (targetZone === 'shields') { // Check for shield zone
-                card.shieldNum = p.nextShieldNum++;
-                p.shields.push(card);
+        if (cardIndex !== -1) {
+            const card = owner.deck.splice(cardIndex, 1)[0];
+
+            // 移動先プレイヤー
+            const destPlayerName = targetPlayerName || name;
+            const destPlayer = this.findP(destPlayerName);
+            if (!destPlayer) return; // Should not happen
+
+            card.isTapped = false; // Reset tap state
+
+            // 指定のゾーンへ追加
+            if (targetZone === 'hand') destPlayer.hand.push(card);
+            else if (targetZone === 'manaZone') destPlayer.manaZone.push(card);
+            else if (targetZone === 'battleZone') destPlayer.battleZone.push(card);
+            else if (targetZone === 'graveyard') destPlayer.graveyard.push(card);
+            else if (targetZone === 'shields') {
+                card.shieldNum = destPlayer.nextShieldNum++;
+                destPlayer.shields.push(card);
             }
 
-            if (shouldShuffle) {
-                p.shuffleDeck(); // フラグがある場合のみシャッフル
-            }
+            if (shouldShuffle) owner.shuffleDeck();
             this.emitState();
         }
     }
@@ -140,15 +150,10 @@ class GameManager {
         if (p.deck.length > 0) {
             const card = p.deck.pop(); // 一番上を引く
 
-            // 呪文がバトルゾーンに置かれようとした場合は墓地へ送る（ルール保護）
-            if (targetZone === 'battleZone' && card.type === 'Spell') {
-                p.graveyard.push(card);
-            } else {
-                // targetZoneは 'manaZone', 'battleZone', 'graveyard' など
-                if (p[targetZone]) {
-                    if (targetZone === 'shields') card.shieldNum = p.nextShieldNum++;
-                    p[targetZone].push(card);
-                }
+            // targetZoneは 'manaZone', 'battleZone', 'graveyard' など
+            if (p[targetZone]) {
+                if (targetZone === 'shields') card.shieldNum = p.nextShieldNum++;
+                p[targetZone].push(card);
             }
             this.emitState();
         }
@@ -176,10 +181,21 @@ class GameManager {
     }
 
     // デッキの上からN枚のカードを表示（デッキは変更しない）
-    viewTopCards(name, N) {
+    viewTopCards(name, N, isPublic = false) {
         const p = this.findP(name);
         const topCards = p.deck.slice(Math.max(p.deck.length - N, 0)); // デッキの末尾が山札の上
-        this.io.to(p.socketId).emit('topCardsResponse', { cards: topCards, source: 'deckTop' });
+
+        const data = {
+            cards: topCards,
+            source: 'deckTop',
+            ownerName: name,
+            isPublicView: isPublic
+        };
+        if (isPublic) {
+            this.io.emit('topCardsResponse', data);
+        } else {
+            this.io.to(p.socketId).emit('topCardsResponse', data);
+        }
     }
 
     // 墓地から特定のカードを移動
@@ -263,6 +279,77 @@ class GameManager {
             card.isTapped = false;
             if (targetZoneName === 'shields') card.shieldNum = player.nextShieldNum++;
             targetArr.push(card);
+        }
+    }
+
+    // 自分の山札を見る
+    viewDeck(playerName) {
+        const p = this.findP(playerName);
+        if (p) {
+            // クライアントへ送信。source='deck'
+            // isPublicView=false, ownerName=playerName
+            const data = {
+                cards: p.deck,
+                source: 'deck',
+                ownerName: playerName,
+                isPublicView: false
+            };
+            this.io.to(p.socketId).emit('cardListResponse', data);
+        }
+    }
+
+    // --- ハンデス関連 ---
+
+    // 対象プレイヤーの手札からランダムに1枚墓地へ
+    randomDiscard(targetPlayerName) {
+        const p = this.findP(targetPlayerName);
+        if (p && p.hand.length > 0) {
+            const index = Math.floor(Math.random() * p.hand.length);
+            const card = p.hand.splice(index, 1)[0];
+            p.graveyard.push(card);
+            this.emitState();
+        }
+    }
+
+    // 対象プレイヤーの手札をリクエスト元に公開
+    viewOpponentHand(requestingPlayerName, targetPlayerName) {
+        const reqP = this.findP(requestingPlayerName);
+        const targetP = this.findP(targetPlayerName);
+
+        if (reqP && targetP) {
+            const data = {
+                cards: targetP.hand,
+                source: 'opponentHand',
+                ownerName: targetPlayerName,
+                isPublicView: false // 個別の公開なのでpublicViewではない扱いで良いか？ -> クライアント側でopponentHandなら操作可能にするロジックにしたのでOK
+            };
+            this.io.to(reqP.socketId).emit('cardListResponse', data);
+        }
+    }
+
+    // 相手の山札を見る
+    viewOpponentDeck(requestingPlayerName, targetPlayerName) {
+        const reqP = this.findP(requestingPlayerName);
+        const targetP = this.findP(targetPlayerName);
+
+        if (reqP && targetP) {
+            const data = {
+                cards: targetP.deck,
+                source: 'opponentDeck',
+                ownerName: targetPlayerName,
+                isPublicView: false
+            };
+            this.io.to(reqP.socketId).emit('cardListResponse', data);
+        }
+    }
+
+    // 指定位置の手札を墓地へ（ピーピングハンデス用）
+    discardAt(targetPlayerName, index) {
+        const p = this.findP(targetPlayerName);
+        if (p && p.hand[index]) {
+            const card = p.hand.splice(index, 1)[0];
+            p.graveyard.push(card);
+            this.emitState();
         }
     }
 }

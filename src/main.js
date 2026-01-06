@@ -63,8 +63,96 @@ function render(state) {
 
     document.getElementById('p1-deck-disp').innerText = my.deckCount;
     document.getElementById('p2-deck-disp').innerText = opp.deckCount;
-    document.getElementById('p1-graveyard').innerText = my.graveCount;
-    document.getElementById('p2-graveyard').innerText = opp.graveCount;
+
+    // 墓地の描画更新
+    renderGraveyard('p1-graveyard', my.graveyard);
+    renderGraveyard('p2-graveyard', opp.graveyard);
+}
+
+function renderGraveyard(elementId, cards) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.innerHTML = '';
+
+    // 墓地名表示
+    const title = document.createElement('div');
+    title.innerText = "GRAVEYARD";
+    title.style.fontSize = "10px";
+    title.style.color = "#aaa";
+    title.style.position = "absolute";
+    title.style.top = "-15px";
+    title.style.width = "100%";
+    title.style.textAlign = "center";
+    el.appendChild(title);
+
+    if (!cards || cards.length === 0) {
+        el.innerHTML += `<div style="font-size:12px; color:#666;">0</div>`;
+        return;
+    }
+
+    // 一番上のカード
+    const topCard = cards[cards.length - 1];
+
+    // カード描画
+    const d = document.createElement('div');
+    d.className = `card ${topCard.civilization?.toLowerCase()}`;
+    // 墓地なので少し小さく表示するか、そのままか。zone内なのでCSSで縮小されるかも確認。
+    // CSS調整なしで一旦そのまま出す。
+
+    d.innerHTML = `
+        <div class="card-name" style="font-size:8px;">${topCard.name}</div>
+        <div style="position:absolute;bottom:2px;right:2px;font-size:10px;">${topCard.power || ''}</div>
+    `;
+
+    // 枚数バッジ
+    const countBadge = document.createElement('div');
+    countBadge.innerText = cards.length;
+    countBadge.style.position = 'absolute';
+    countBadge.style.bottom = '-5px';
+    countBadge.style.right = '-5px';
+    countBadge.style.background = '#333';
+    countBadge.style.color = '#fff';
+    countBadge.style.borderRadius = '50%';
+    countBadge.style.width = '20px';
+    countBadge.style.height = '20px';
+    countBadge.style.fontSize = '12px';
+    countBadge.style.display = 'flex';
+    countBadge.style.alignItems = 'center';
+    countBadge.style.justifyContent = 'center';
+    countBadge.style.border = '1px solid #777';
+    countBadge.style.zIndex = '10'; // カードの上
+
+    // クリックで一覧表示イベント (既存のonclick機能はindex.html等で定義されている？ -> main.jsのグローバルにはない。index.htmlのonclick属性か？)
+    // 既存のHTMLでは `onclick="socket.emit('requestGraveList', ...)"` だった。
+    // JSで中身を書き換えてしまうとそれが消えるので、ここで再設定が必要。
+    const pName = elementId.includes('p1') ? 'Player1' : 'Player2';
+    // 自分か相手か判定が必要。render関数内の my/opp ロジックと合わせる必要があるが、
+    // ここでは elementId から推測するよりも、単純にクリックハンドラをつける。
+    // ただし localName との照合が面倒なので、socket送信時に解決させる。
+    // 実は p1-graveyard は常に「自分」か「相手」かは main.js の render 内で決まっている。
+    // elementId = 'p1-graveyard' なら Player1の墓地。
+
+    d.onclick = (e) => {
+        e.stopPropagation();
+        // 墓地リストリクエスト
+        // 誰の墓地か？
+        // 既存ロジック： p1-graveyard は常に Player1 の墓地、ではない。
+        // render関数で: const my = localName === 'Player1' ? state.p1 : state.p2;
+        // p1-graveyard には my.graveyard を入れている。
+        // つまり p1-graveyard は常に「自分」の墓地。
+        // p2-graveyard は常に「相手」の墓地。
+
+        // サーバーへのリクエストには playerName が必要。
+        const targetPlayer = elementId === 'p1-graveyard' ? localName : (localName === 'Player1' ? 'Player2' : 'Player1');
+        socket.emit('requestGraveList', { playerName: targetPlayer });
+    };
+
+    // プレビュー
+    d.onmouseenter = () => showPreview(topCard);
+    d.onmouseleave = () => hidePreview();
+
+    el.appendChild(d);
+    el.appendChild(countBadge);
 }
 
 function renderZone(id, cards, isFace) {
@@ -153,12 +241,13 @@ function renderZone(id, cards, isFace) {
 // --- 山札・サーチ関連 ---
 const p1DeckDisp = document.getElementById('p1-deck-disp');
 const deckContextMenu = document.getElementById('deck-context-menu');
-const menuDraw = document.getElementById('menu-draw');
-const menuBoost = document.getElementById('menu-boost');
-const menuToBattlezone = document.getElementById('menu-to-battlezone');
-const menuToGraveyard = document.getElementById('menu-to-graveyard');
-const menuViewTop = document.getElementById('menu-view-top');
-const menuSearch = document.getElementById('menu-search');
+const menuDraw = document.getElementById('deck-menu-draw');
+const menuBoost = document.getElementById('deck-menu-boost');
+const menuToBattlezone = document.getElementById('deck-menu-to-battlezone');
+const menuToGraveyard = document.getElementById('deck-menu-to-graveyard');
+const menuViewTop = document.getElementById('deck-menu-view-top');
+const menuViewTopPublic = document.getElementById('deck-menu-view-top-public');
+const menuSearch = document.getElementById('deck-menu-search');
 
 let hideTimeout;
 
@@ -181,7 +270,7 @@ function clearHideTimer() {
     clearTimeout(hideTimeout);
 }
 
-function hideMenu() {
+function hideDeckMenu() {
     deckContextMenu.style.display = 'none';
 }
 
@@ -192,30 +281,30 @@ p1DeckDisp.addEventListener('mouseleave', startHideTimer);
 // メニューにマウスが入ったらタイマーをクリア（非表示をキャンセル）
 deckContextMenu.addEventListener('mouseenter', clearHideTimer);
 // メニューからマウスが出たらメニュー非表示
-deckContextMenu.addEventListener('mouseleave', hideMenu);
+deckContextMenu.addEventListener('mouseleave', hideDeckMenu);
 
 menuDraw.onclick = () => {
     socket.emit('drawCard', { playerName: localName });
-    hideMenu();
+    hideDeckMenu();
 };
 
 menuBoost.onclick = () => {
     socket.emit('moveTopCard', { playerName: localName, targetZone: 'manaZone' });
-    hideMenu();
+    hideDeckMenu();
 };
 
 menuToBattlezone.onclick = () => {
     socket.emit('moveTopCard', { playerName: localName, targetZone: 'battleZone' });
-    hideMenu();
+    hideDeckMenu();
 };
 
 menuToGraveyard.onclick = () => {
     socket.emit('moveTopCard', { playerName: localName, targetZone: 'graveyard' });
-    hideMenu();
+    hideDeckMenu();
 };
 
 menuViewTop.onclick = () => {
-    hideMenu();
+    hideDeckMenu();
     const numCards = prompt("山札の上から何枚見ますか？ (例: 5)");
     const N = parseInt(numCards, 10);
     if (!isNaN(N) && N > 0) {
@@ -225,9 +314,43 @@ menuViewTop.onclick = () => {
     }
 };
 
+// menuViewTopPublic は上部で宣言済み
+menuViewTopPublic.onclick = () => {
+    hideDeckMenu(); // hideMenu is aliased to hideDeckMenu in previous steps? No, check hideMenu function.
+    // wait, existing code uses hideMenu() but I used hideDeckMenu() in my previous apply.
+    // I need to be consistent. Let's use hideDeckMenu() if I introduced it, or hideMenu() if it exists.
+    // In the viewed snippet, hideMenu() is defined at line 274.
+    // My previous replacement (Step 535) used hideDeckMenu().
+    // I should probably stick to hideMenu() or rename it.
+    // Let's check if hideDeckMenu exists. It wasn't in the snippet.
+    // I will assume hideMenu() is the correct one based on lines 274-276.
+
+    // Actually, looking at Step 535 input, I replaced lines 241-250 and added hideDeckMenu() calls in the onclicks?
+    // No, I added default onclicks in Step 535 that called hideDeckMenu().
+    // But hideDeckMenu() is NOT defined in the snippet I just viewed (lines 240-330).
+    // The snippet shows hideMenu() at line 274.
+    // So my previous edit in Step 535 might have introduced ReferenceErrors solely because hideDeckMenu() is undefined!
+    // I need to define hideDeckMenu = hideMenu or replace calls.
+
+    // Also, the lint error is about menuViewTopPublic redeclaration.
+    // Line 249: const menuViewTopPublic = ...
+    // Line 318: const menuViewTopPublic = ...
+
+    // I will remove the redeclaration at 318 and update the onclick.
+
+    const numCards = prompt("【公開】山札の上から何枚表にしますか？ (例: 3)");
+    const N = parseInt(numCards, 10);
+    if (!isNaN(N) && N > 0) {
+        socket.emit('viewTopCards', { playerName: localName, N: N, isPublic: true });
+    } else if (numCards !== null) {
+        alert("有効な数字を入力してください。");
+    }
+    hideDeckMenu();
+};
+
 menuSearch.onclick = () => {
-    hideMenu();
-    socket.emit('requestDeckList', { playerName: localName });
+    socket.emit('viewDeck', { playerName: localName });
+    hideDeckMenu();
 };
 
 // ドラッグ＆ドロップ操作を削除したので、p1DeckDisp.ondragstartは不要
@@ -254,7 +377,18 @@ function moveCardFromViewer(targetZone) {
     if (!selectedCardInViewer) return;
     const { source, id } = selectedCardInViewer; // id を使用
 
-    const eventName = (source === 'deck' || source === 'deckTop') ? 'moveCardFromDeck' : 'moveCardFromGrave';
+    const eventName = (source === 'deck' || source === 'deckTop' || source === 'opponentDeck') ? 'moveCardFromDeck' : 'moveCardFromGrave';
+
+    // ターゲットプレイヤーとデッキの持ち主を決定
+    let targetPlayerName = localName;
+    let deckOwnerName = null;
+
+    if (source === 'opponentDeck') {
+        deckOwnerName = selectedCardInViewer.ownerName;
+        // ユーザー要望: 墓地以外もすべて持ち主へ移動
+        targetPlayerName = deckOwnerName;
+    }
+
     // ユーザー要望: シャッフルしたい
     // ソースがどこであれ、デッキからの移動ならシャッフルする（デフォルトtrue）
     socket.emit(eventName, {
@@ -262,7 +396,9 @@ function moveCardFromViewer(targetZone) {
         cardId: id,
         targetZone,
         shouldShuffle: true,
-        index: selectedCardInViewer.index // 墓地からの移動にはindexが必要
+        index: selectedCardInViewer.index, // 墓地からの移動にはindexが必要
+        deckOwnerName,     // 追加: デッキの持ち主
+        targetPlayerName   // 追加: 移動先プレイヤー
     });
 
     // ユーザー要望: モーダルは勝手に閉じない
@@ -280,9 +416,145 @@ viewerMenuBattlezone.onclick = () => moveCardFromViewer('battleZone');
 viewerMenuMana.onclick = () => moveCardFromViewer('manaZone');
 viewerMenuGraveyard.onclick = () => moveCardFromViewer('graveyard');
 
+// --- ハンデス機能 (Discard) ---
+const viewerMenuDiscard = document.getElementById('viewer-menu-discard');
+viewerMenuDiscard.onclick = () => {
+    if (selectedCardInViewer) {
+        // 相手の手札を見ている場合のみ有効
+        if (selectedCardInViewer.source === 'opponentHand') {
+            socket.emit('discardAt', {
+                requestingPlayerName: localName,
+                targetPlayerName: selectedCardInViewer.ownerName, // ownerNameが必要
+                index: selectedCardInViewer.index
+            });
+            // 画面から消す
+            if (selectedCardInViewer.element) selectedCardInViewer.element.remove();
+            selectedCardInViewer = null;
+            hideViewerMenu();
+        }
+    }
+};
+
+
+// --- 相手の手札メニュー ---
+const oppHandMenu = document.getElementById('opponent-hand-context-menu');
+const oppMenuRandomDiscard = document.getElementById('opp-menu-random-discard');
+const oppMenuViewHand = document.getElementById('opp-menu-view-hand');
+
+// 相手の手札ゾーンをクリックしたときの処理
+// ※ render関数内でイベントリスナーを付ける形にするか、グローバルで委譲するか。
+// main.jsの既存構造ではrenderZoneで都度innerHTMLクリアしているため、
+// renderZone呼び出し後にイベントを付ける必要があるが、
+// ここではdelegationを使うか、renderZoneを修正する。
+// 簡易的に document全体クリックでターゲットが相手ハンドゾーンなら表示、とする。
+
+// --- 相手の手札メニュー (Hover) ---
+let oppHandMenuTimeout;
+
+function setupOpponentHandHover() {
+    const oppHandMenu = document.getElementById('opponent-hand-context-menu');
+    const zones = document.querySelectorAll('.zone');
+
+    zones.forEach(zone => {
+        if (!zone.id.includes('hand-zone')) return;
+
+        zone.addEventListener('mouseenter', (e) => {
+            // p1-hand-zone は常に自分、p2-hand-zone は常に相手の手札として描画されているため、
+            // p2-hand-zone の場合のみメニューを表示する
+            if (zone.id === 'p2-hand-zone') {
+                clearTimeout(oppHandMenuTimeout);
+                // マウスカーソルの近くに表示
+                oppHandMenu.style.left = `${e.pageX}px`;
+                oppHandMenu.style.top = `${e.pageY}px`;
+                oppHandMenu.style.display = 'block';
+            }
+        });
+
+        zone.addEventListener('mouseleave', () => {
+            oppHandMenuTimeout = setTimeout(() => {
+                oppHandMenu.style.display = 'none';
+            }, 300); // 少し猶予を持たせる
+        });
+    });
+
+    // メニュー自体にホバーしたときの処理
+    oppHandMenu.addEventListener('mouseenter', () => {
+        clearTimeout(oppHandMenuTimeout);
+    });
+
+    oppHandMenu.addEventListener('mouseleave', () => {
+        oppHandMenu.style.display = 'none';
+    });
+}
+
+// --- 相手の山札メニュー (Hover) ---
+let oppDeckMenuTimeout;
+
+function setupOpponentDeckHover() {
+    const oppDeckMenu = document.getElementById('opponent-deck-context-menu');
+    // デッキ表示要素は p1-deck-disp, p2-deck-disp の親の .deck-stack またはそれ自体
+    // HTML構造を見ると、#p1-deck-stack, #p2-deck-stack がある。
+    // id="p1-deck-stack" class="deck-stack"
+    const stacks = document.querySelectorAll('.deck-stack');
+
+    stacks.forEach(stack => {
+        stack.addEventListener('mouseenter', (e) => {
+            // p1-deck-disp は常に自分のデッキ（render関数でそのように描画されている）
+            const isMyDeck = stack.id === 'p1-deck-disp';
+
+            if (!isMyDeck) {
+                clearTimeout(oppDeckMenuTimeout);
+                oppDeckMenu.style.display = 'block';
+                const rect = stack.getBoundingClientRect();
+                const menuWidth = oppDeckMenu.offsetWidth;
+                oppDeckMenu.style.left = `${rect.left - menuWidth - 10}px`;
+                oppDeckMenu.style.top = `${rect.top}px`;
+            }
+        });
+
+        stack.addEventListener('mouseleave', () => {
+            oppDeckMenuTimeout = setTimeout(() => {
+                oppDeckMenu.style.display = 'none';
+            }, 300);
+        });
+    });
+
+    oppDeckMenu.addEventListener('mouseenter', () => clearTimeout(oppDeckMenuTimeout));
+    oppDeckMenu.addEventListener('mouseleave', () => oppDeckMenu.style.display = 'none');
+}
+
+// グローバルには setupOpponentHandHover を呼ぶ必要があるが、
+// zone要素が動的に生成されるわけではない(index.htmlにある)のでDOMContentLoadedで呼べばよい。
+// ただしここではタイミングが不明確なので、socket.on('playerAssigned')の後や
+// renderの初回に行いたいところだが、zone自体は静的ならDOMContentLoadedでOK。
+document.addEventListener('DOMContentLoaded', () => {
+    setupOpponentHandHover();
+    setupOpponentDeckHover();
+});
+
+const oppMenuViewDeck = document.getElementById('opp-menu-view-deck');
+oppMenuViewDeck.onclick = () => {
+    const targetPlayerName = localName === 'Player1' ? 'Player2' : 'Player1';
+    socket.emit('viewOpponentDeck', { requestingPlayerName: localName, targetPlayerName });
+    document.getElementById('opponent-deck-context-menu').style.display = 'none';
+};
+
+oppMenuRandomDiscard.onclick = () => {
+    // ターゲットプレイヤー名の特定
+    const targetPlayerName = localName === 'Player1' ? 'Player2' : 'Player1';
+    socket.emit('randomDiscard', { targetPlayerName });
+    oppHandMenu.style.display = 'none';
+};
+
+oppMenuViewHand.onclick = () => {
+    const targetPlayerName = localName === 'Player1' ? 'Player2' : 'Player1';
+    socket.emit('viewOpponentHand', { requestingPlayerName: localName, targetPlayerName });
+    oppHandMenu.style.display = 'none';
+};
+
 // --- Socket Event Handlers ---
 function handleCardListResponse(data) {
-    const { cards, source } = data;
+    const { cards, source, ownerName, isPublicView } = data;
     deckContents.innerHTML = '';
     deckViewerModal.style.display = 'flex';
     hideViewerMenu(); // Ensure menu is hidden when list is re-rendered
@@ -290,9 +562,30 @@ function handleCardListResponse(data) {
     if (source === 'deckTop') {
         viewerTitle.innerText = "山札の上部 (TOP OF DECK)";
     } else if (source === 'deck') {
-        viewerTitle.innerText = "デッキ検索 (DECK SEARCH)";
+        viewerTitle.innerText = "山札を見る (VIEW DECK)";
     } else if (source === 'grave') {
         viewerTitle.innerText = "墓地 (GRAVEYARD)";
+    } else if (source === 'opponentHand') {
+        viewerTitle.innerText = "相手の手札 (OPPONENT HAND)";
+    } else if (source === 'opponentDeck') {
+        viewerTitle.innerText = "相手の山札 (OPPONENT DECK)";
+    }
+
+    // メニューの表示制御
+    const discardMenu = document.getElementById('viewer-menu-discard');
+    if (source === 'opponentHand') {
+        discardMenu.style.display = 'block';
+        // 他の移動メニューは隠すべきか？とりあえずそのまま（機能しないはずだが念の為隠すとなお良い）
+        document.getElementById('viewer-menu-hand').style.display = 'none';
+        document.getElementById('viewer-menu-battlezone').style.display = 'none';
+        document.getElementById('viewer-menu-mana').style.display = 'none';
+        document.getElementById('viewer-menu-graveyard').style.display = 'none';
+    } else {
+        discardMenu.style.display = 'none';
+        document.getElementById('viewer-menu-hand').style.display = 'block';
+        document.getElementById('viewer-menu-battlezone').style.display = 'block';
+        document.getElementById('viewer-menu-mana').style.display = 'block';
+        document.getElementById('viewer-menu-graveyard').style.display = 'block';
     }
 
     cards.forEach((card, index) => {
@@ -300,14 +593,22 @@ function handleCardListResponse(data) {
         d.className = `card ${card.civilization?.toLowerCase()}`;
         d.innerHTML = `<div style="font-size:9px;">${card.name}</div>`;
 
-        d.onclick = (e) => {
-            e.stopPropagation();
-            selectedCardInViewer = { source, id: card.id, index: index, element: d }; // elementも保存
-            const cardRect = d.getBoundingClientRect();
-            cardViewerContextMenu.style.left = `${cardRect.right + 5}px`;
-            cardViewerContextMenu.style.top = `${cardRect.top}px`;
-            cardViewerContextMenu.style.display = 'block';
-        };
+        // 公開ビューかつ他人のカードなら操作無効（ただしopponentHandの場合は操作したい＝捨てさせたい）
+        // opponentHandの場合は専用の操作になるため、ここではクリック有効にする
+        if (isPublicView && ownerName && ownerName !== localName && source !== 'opponentHand' && source !== 'opponentDeck') {
+            d.style.cursor = 'default';
+            // onclickを設定しない (メニューが出ない)
+        } else {
+            d.onclick = (e) => {
+                e.stopPropagation();
+                // ownerNameを保存しておく（Discard時に必要）
+                selectedCardInViewer = { source, id: card.id, index: index, element: d, ownerName: ownerName };
+                const cardRect = d.getBoundingClientRect();
+                cardViewerContextMenu.style.left = `${cardRect.right + 5}px`;
+                cardViewerContextMenu.style.top = `${cardRect.top}px`;
+                cardViewerContextMenu.style.display = 'block';
+            };
+        }
         deckContents.appendChild(d);
     });
 }
@@ -323,8 +624,14 @@ socket.on('topCardsResponse', (data) => {
 
 document.getElementById('close-deck-viewer').onclick = () => {
     deckViewerModal.style.display = 'none';
-    if (viewerTitle.innerText.includes("DECK SEARCH")) {
+    const titleText = viewerTitle.innerText;
+    // 自分自身の山札を見ていた場合のみシャッフル
+    if (titleText.includes("VIEW DECK") || titleText.includes("山札を見る")) {
         socket.emit('shuffleDeck', { playerName: localName });
+    } else if (titleText.includes("OPPONENT DECK") || titleText.includes("相手の山札")) {
+        // 相手の山札を見ていた場合もシャッフル
+        const targetPlayer = localName === 'Player1' ? 'Player2' : 'Player1';
+        socket.emit('shuffleDeck', { playerName: targetPlayer });
     }
     hideViewerMenu();
 };

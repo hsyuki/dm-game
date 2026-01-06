@@ -58,9 +58,7 @@ class Player {
     moveCardToBattleZone(i) {
         if (!this.hand[i]) return false;
         const c = this.hand.splice(i, 1)[0];
-        // 💡 呪文なら墓地、それ以外はバトルゾーンへ
-        if (c.type === 'Spell') this.graveyard.push(c);
-        else this.battleZone.push(c);
+        this.battleZone.push(c);
         return true;
     }
 
@@ -92,6 +90,7 @@ class Player {
             manaZone: this.manaZone,
             battleZone: this.battleZone,
             shields: this.shields,
+            graveyard: this.graveyard,
             graveCount: this.graveyard.length
         };
     }

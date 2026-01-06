@@ -377,16 +377,17 @@ body {
 }
 
 .graveyard {
-    width: 70px;
-    height: 98px;
+    width: var(--card-width);
+    height: var(--card-height);
     border: 2px dashed #e74c3c;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #e74c3c;
+    color: #eee;
     font-size: 24px;
     border-radius: 5px;
     cursor: pointer;
+    position: relative;
 }
 
 .view-btn {

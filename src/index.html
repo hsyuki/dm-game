@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <title>Duel Masters Sandbox - Standard Scroll</title>
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <div id="start-modal" class="modal-overlay">
         <div class="lobby-content">
             <h1 style="color:#e67e22; margin-top:0;">DUEL LOBBY</h1>
-            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; text-align:left;">
+            <div
+                style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; text-align:left;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span>Player 1: </span><b id="p1-status" style="color:#ff4757;">WAITING...</b>
                 </div>
@@ -20,9 +23,11 @@
                 </div>
             </div>
             <p style="font-size:14px; color:#aaa;">デッキ選択</p>
-            <select id="my-deck-select" style="padding:10px; width:220px; margin-bottom:20px; border-radius:5px; background:#333; color:white; border:1px solid #555;"></select>
+            <select id="my-deck-select"
+                style="padding:10px; width:220px; margin-bottom:20px; border-radius:5px; background:#333; color:white; border:1px solid #555;"></select>
             <br>
-            <button id="ready-btn" style="padding:15px 50px; cursor:pointer; background:#27ae60; color:white; border:none; border-radius:6px; font-weight:bold;">準備完了！</button>
+            <button id="ready-btn"
+                style="padding:15px 50px; cursor:pointer; background:#27ae60; color:white; border:none; border-radius:6px; font-weight:bold;">準備完了！</button>
             <p id="lobby-msg" style="font-size:12px; color:#666; margin-top:15px;">役割判定中...</p>
         </div>
     </div>
@@ -31,7 +36,8 @@
         <div class="viewer-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h2 id="viewer-title" style="margin:0; color:#e67e22;">CARD SEARCH</h2>
-                <button id="close-deck-viewer" style="padding:8px 20px; cursor:pointer; background:#444; color:white; border:none; border-radius:4px;">閉じる</button>
+                <button id="close-deck-viewer"
+                    style="padding:8px 20px; cursor:pointer; background:#444; color:white; border:none; border-radius:4px;">閉じる</button>
             </div>
             <div id="deck-contents"></div>
         </div>
@@ -59,7 +65,8 @@
         </div>
 
         <div class="center-bar">
-            <button id="untap-btn" style="padding:10px 25px; cursor:pointer; background:#2980b9; color:white; border:none; border-radius:5px; font-weight:bold;">自分を全アンタップ</button>
+            <button id="untap-btn"
+                style="padding:10px 25px; cursor:pointer; background:#2980b9; color:white; border:none; border-radius:5px; font-weight:bold;">自分を全アンタップ</button>
         </div>
 
         <div id="p1-area" class="player-area">
@@ -82,12 +89,13 @@
 
     <div id="deck-context-menu" class="context-menu">
         <ul>
-            <li id="menu-draw">ドロー</li>
-            <li id="menu-boost">マナゾーンに置く</li>
-            <li id="menu-to-battlezone">バトルゾーンに出す</li>
-            <li id="menu-to-graveyard">墓地に置く</li>
-            <li id="menu-view-top">山札の上を見る</li>
-            <li id="menu-search">デッキを検索</li>
+            <li id="deck-menu-draw">1枚引く</li>
+            <li id="deck-menu-boost">マナゾーンに置く</li>
+            <li id="deck-menu-to-battlezone">バトルゾーンに出す</li>
+            <li id="deck-menu-to-graveyard">墓地に置く</li>
+            <li id="deck-menu-view-top">山札の上を見る</li>
+            <li id="deck-menu-view-top-public">公開して山札の上を見る</li>
+            <li id="deck-menu-search">山札を見る</li>
         </ul>
     </div>
 
@@ -97,7 +105,22 @@
             <li id="viewer-menu-battlezone">バトルゾーンに出す</li>
             <li id="viewer-menu-mana">マナゾーンに置く</li>
             <li id="viewer-menu-graveyard">墓地に置く</li>
+            <li id="viewer-menu-discard" style="display:none;">捨てさせる</li>
+        </ul>
+    </div>
+
+    <div id="opponent-hand-context-menu" class="context-menu">
+        <ul>
+            <li id="opp-menu-random-discard">ランダムに1枚捨てさせる</li>
+            <li id="opp-menu-view-hand">手札を見て捨てさせる</li>
+        </ul>
+    </div>
+
+    <div id="opponent-deck-context-menu" class="context-menu">
+        <ul>
+            <li id="opp-menu-view-deck">山札を見る</li>
         </ul>
     </div>
 </body>
+
 </html>

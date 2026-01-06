@@ -52,13 +52,19 @@ io.on('connection', (socket) => {
 
     // サーチ・トップ移動
     socket.on('requestDeckList', d => gameManager?.requestDeckList(d.playerName));
-    socket.on('moveCardFromDeck', d => gameManager?.moveCardFromDeck(d.playerName, d.cardId, d.targetZone, d.shouldShuffle));
+    socket.on('moveCardFromDeck', d => gameManager?.moveCardFromDeck(d.playerName, d.cardId, d.targetZone, d.shouldShuffle, d.deckOwnerName, d.targetPlayerName));
     socket.on('moveTopCard', d => gameManager?.moveTopCard(d.playerName, d.targetZone));
     socket.on('shuffleDeck', d => gameManager?.shuffleDeck(d.playerName));
-    socket.on('viewTopCards', d => gameManager?.viewTopCards(d.playerName, d.N));
+    socket.on('viewTopCards', d => gameManager?.viewTopCards(d.playerName, d.N, d.isPublic));
+    socket.on('viewDeck', d => gameManager?.viewDeck(d.playerName));
 
-    // 墓地の中身をリクエスト
     socket.on('requestGraveList', d => gameManager?.requestGraveList(d.playerName));
+
+    // ハンデス関連
+    socket.on('randomDiscard', d => gameManager?.randomDiscard(d.targetPlayerName));
+    socket.on('viewOpponentHand', d => gameManager?.viewOpponentHand(d.requestingPlayerName, d.targetPlayerName));
+    socket.on('viewOpponentDeck', d => gameManager?.viewOpponentDeck(d.requestingPlayerName, d.targetPlayerName));
+    socket.on('discardAt', d => gameManager?.discardAt(d.targetPlayerName, d.index));
     // 墓地からカードを移動
     socket.on('moveCardFromGrave', d => gameManager?.moveCardFromGrave(d.playerName, d.index, d.targetZone));
 
