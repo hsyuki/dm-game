@@ -102,22 +102,18 @@ body {
 
 #p1-area #p1-battle-zone,
 #p2-area #p2-battle-zone {
-    flex-grow: 2;
-    /* バトルゾーンの横幅の比率を維持 */
+    flex: 0 0 75%;
+    /* Fixed 75% width */
     height: auto;
-    /* 縦幅を親コンテナに合わせて自動調整 */
     min-height: var(--card-height);
-    /* カード1枚分の最小高さを確保 */
 }
 
 #p1-area #p1-shield-zone,
 #p2-area #p2-shield-zone {
-    flex-grow: 1;
-    /* シールドゾーンの横幅の比率を維持 */
+    flex: 0 0 25%;
+    /* Fixed 25% width */
     height: auto;
-    /* 縦幅を親コンテナに合わせて自動調整 */
     min-height: var(--card-height);
-    /* カード1枚分の最小高さを確保 */
 }
 
 #p1-mana-zone,

@@ -186,7 +186,11 @@ function renderZone(id, cards, isFace) {
                 cEl.onclick = (e) => {
                     e.stopPropagation();
                     const zoneType = id.includes('mana') ? 'manaZone' : 'battleZone';
-                    socket.emit('toggleTap', { playerName: localName, zone: zoneType, index: i });
+
+                    // 自分自身のカードのみタップ可能（自分のカードは常に p1- エリアに表示される）
+                    if (id.startsWith('p1-')) {
+                        socket.emit('toggleTap', { playerName: localName, zone: zoneType, index: i });
+                    }
                 };
             }
             cEl.onmouseenter = () => showPreview(c);

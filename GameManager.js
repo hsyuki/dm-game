@@ -79,7 +79,17 @@ class GameManager {
     }
 
     toggleTap(name, zone, index) {
-        if (this.findP(name).toggleTap(zone, index)) {
+        const p = this.findP(name);
+        if (zone === 'battleZone') {
+            const card = p.battleZone[index];
+            // 呪文はタップできないようにする
+            if (card && card.type && card.type.trim().toLowerCase() === 'spell') {
+                console.log(`GM: Spell tap blocked for ${card.name}`);
+                return;
+            }
+        }
+
+        if (p.toggleTap(zone, index)) {
             this.emitState();
         }
     }

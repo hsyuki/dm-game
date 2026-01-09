@@ -194,6 +194,26 @@ const CardDefinitions = {
         abilities: ["S・トリガー", "自分の山札の上から1枚をマナゾーンに置く。"],
         isEvolution: false
     },
+    "シビレアシダケ": {
+        name: "シビレアシダケ",
+        civilization: "Nature",
+        type: "Creature",
+        race: "バルーン・マッシュルーム",
+        cost: 2,
+        power: 1000,
+        abilities: ["登場時：自分の手札を1枚、マナゾーンに置いてもよい。"],
+        isEvolution: false
+    },
+    "青銅の鎧": {
+        name: "青銅の鎧",
+        civilization: "Nature",
+        type: "Creature",
+        race: "ビーストフォーク",
+        cost: 3,
+        power: 1000,
+        abilities: ["登場時：山札の上のカードを1枚マナゾーンに置く。"],
+        isEvolution: false
+    },
     "神秘の宝箱": {
         name: "神秘の宝箱",
         civilization: "Nature",
