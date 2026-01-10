@@ -75,7 +75,6 @@ body {
     gap: 10px;
     flex-grow: 1;
     align-items: stretch;
-    padding: 0 5px;
 }
 
 #p1-area .battle-shield-row {
@@ -103,16 +102,16 @@ body {
 
 #p1-area #p1-battle-zone,
 #p2-area #p2-battle-zone {
-    flex: 0 0 75%;
-    /* Fixed 75% width */
+    flex: 3;
+    /* Ratio 3 */
     height: auto;
     min-height: calc(var(--card-height) + 15px);
 }
 
 #p1-area #p1-shield-zone,
 #p2-area #p2-shield-zone {
-    flex: 0 0 25%;
-    /* Fixed 25% width */
+    flex: 1;
+    /* Ratio 1 */
     height: auto;
     min-height: calc(var(--card-height) + 15px);
 }
