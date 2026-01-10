@@ -102,6 +102,7 @@ function renderGraveyard(elementId, cards) {
     d.innerHTML = `
         <div class="card-name" style="font-size:8px;">${topCard.name}</div>
         <div style="position:absolute;bottom:2px;right:2px;font-size:10px;">${topCard.power || ''}</div>
+        ${topCard.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:12px;height:12px;margin-top:2px;"></div>' : ''}
     `;
 
     // 枚数バッジ
@@ -174,6 +175,7 @@ function renderZone(id, cards, isFace) {
             cEl.innerHTML = `
                 <div class="card-name">${c.name}</div>
                 ${c.race ? `<div class="card-race" style="font-size: 8px; color: rgba(255,255,255,0.7); margin-top: 2px;">${c.race}</div>` : ''}
+                ${c.abilities?.includes('ブロッカー') ? '<div class="blocker-icon"></div>' : ''}
                 <div style="position:absolute;bottom:5px;right:5px;font-size:12px;">${c.power || ''}</div>
             `;
             const costBadge = document.createElement('div');
@@ -595,7 +597,11 @@ function handleCardListResponse(data) {
     cards.forEach((card, index) => {
         const d = document.createElement('div');
         d.className = `card ${card.civilization?.toLowerCase()}`;
-        d.innerHTML = `<div style="font-size:9px;">${card.name}</div>`;
+        d.innerHTML = `
+            <div style="font-size:9px;">${card.name}</div>
+            ${card.race ? `<div class="card-race" style="font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 1px;">${card.race}</div>` : ''}
+            ${card.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:14px;height:14px;margin-top:2px;"></div>' : ''}
+        `;
 
         // 公開ビューかつ他人のカードなら操作無効（ただしopponentHandの場合は操作したい＝捨てさせたい）
         // opponentHandの場合は専用の操作になるため、ここではクリック有効にする

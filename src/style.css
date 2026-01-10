@@ -10,6 +10,10 @@
     /* Define a custom property for offset (increased) */
 }
 
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: sans-serif;
     background: #1a1a1a;
@@ -68,16 +72,13 @@ body {
 
 .battle-shield-row {
     display: flex;
-    gap: 5px;
-    /* Spacing between battle and shield zones */
+    gap: 10px;
     flex-grow: 1;
-    /* Allow to fill available space */
     align-items: stretch;
-    /* Make items stretch to fill the height */
+    padding: 0 5px;
 }
 
 #p1-area .battle-shield-row {
-    /* P1のバトル・シールドゾーンの並びを反転 */
     flex-direction: row-reverse;
 }
 
@@ -105,7 +106,7 @@ body {
     flex: 0 0 75%;
     /* Fixed 75% width */
     height: auto;
-    min-height: var(--card-height);
+    min-height: calc(var(--card-height) + 15px);
 }
 
 #p1-area #p1-shield-zone,
@@ -113,18 +114,18 @@ body {
     flex: 0 0 25%;
     /* Fixed 25% width */
     height: auto;
-    min-height: var(--card-height);
+    min-height: calc(var(--card-height) + 15px);
 }
 
 #p1-mana-zone,
 #p2-mana-zone {
-    height: var(--card-height);
+    height: calc(var(--card-height) + 15px);
     /* マナゾーンの高さをカードと同じに設定 */
 }
 
 #p1-hand-zone,
 #p2-hand-zone {
-    min-height: var(--card-height);
+    min-height: calc(var(--card-height) + 15px);
     /* ハンドゾーンが潰れないように最小高さを設定 */
 }
 
@@ -155,6 +156,29 @@ body {
     margin-top: 5px;
     line-height: 1.2;
     word-break: break-all;
+}
+
+/* --- Blocker Icon --- */
+.blocker-icon {
+    width: 20px;
+    height: 20px;
+    background-color: #000;
+    border: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+    position: relative;
+    border-radius: 2px;
+}
+
+.blocker-icon::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background-color: #1e90ff;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(30, 144, 255, 0.8);
 }
 
 /* コストバッジの基本スタイル */
@@ -260,8 +284,8 @@ body {
 #p1-shield-zone .card,
 #p2-shield-zone .card {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 10px;
+    left: 5px;
     margin: 0;
     /* Remove any default margins */
     z-index: 1;

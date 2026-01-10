@@ -242,6 +242,13 @@ class GameManager {
             const movingCard = fromArr.splice(data.sourceIndex, 1)[0];
             const baseCard = toArr[data.targetIndex];
 
+            if (!baseCard) {
+                console.error("GM: evolveCard - baseCard not found at targetIndex", data.targetIndex);
+                // 元に戻すか、エラーログを出して終了
+                fromArr.splice(data.sourceIndex, 0, movingCard);
+                return;
+            }
+
             // 進化スタック作成
             movingCard.evolvesFrom = baseCard;
             movingCard.isTapped = baseCard.isTapped;
