@@ -100,9 +100,12 @@ function renderGraveyard(elementId, cards) {
     // CSS調整なしで一旦そのまま出す。
 
     d.innerHTML = `
-        <div class="card-name" style="font-size:8px;">${topCard.name}</div>
-        <div style="position:absolute;bottom:2px;right:2px;font-size:10px;">${topCard.power || ''}</div>
-        ${topCard.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:12px;height:12px;margin-top:2px;"></div>' : ''}
+        <div class="card-name ${topCard.name && topCard.name.length >= 8 ? 'small-text' : ''}" style="font-size:9px;">${topCard.name}</div>
+        <div class="card-ability-icons">
+            ${topCard.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:14px;height:14px;margin-top:2px;"></div>' : ''}
+            ${topCard.abilities?.includes('S・トリガー') ? '<div class="st-icon" style="width:12px;height:12px;margin-top:3px;"></div>' : ''}
+        </div>
+        <div style="position:absolute;bottom:4px;right:4px;font-size:12px;">${topCard.power || ''}</div>
     `;
 
     // 枚数バッジ
@@ -145,7 +148,7 @@ function renderGraveyard(elementId, cards) {
 
         // サーバーへのリクエストには playerName が必要。
         const targetPlayer = elementId === 'p1-graveyard' ? localName : (localName === 'Player1' ? 'Player2' : 'Player1');
-        socket.emit('requestGraveList', { playerName: targetPlayer });
+        socket.emit('requestGraveList', { playerName: targetPlayer, requestingPlayerName: localName });
     };
 
     // プレビュー
@@ -173,10 +176,13 @@ function renderZone(id, cards, isFace) {
 
         if (isFace && c.name) {
             cEl.innerHTML = `
-                <div class="card-name">${c.name}</div>
-                ${c.race ? `<div class="card-race" style="font-size: 8px; color: rgba(255,255,255,0.7); margin-top: 2px;">${c.race}</div>` : ''}
-                ${c.abilities?.includes('ブロッカー') ? '<div class="blocker-icon"></div>' : ''}
-                <div style="position:absolute;bottom:5px;right:5px;font-size:12px;">${c.power || ''}</div>
+                <div class="card-name ${c.name.length >= 8 ? 'small-text' : ''}" style="font-size:10px;">${c.name}</div>
+                ${c.race ? `<div class="card-race" style="font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 12px; text-align: center; width: 100%;">${c.race}</div>` : ''}
+                <div class="card-ability-icons">
+                    ${c.abilities?.includes('ブロッカー') ? '<div class="blocker-icon"></div>' : ''}
+                    ${c.abilities?.includes('S・トリガー') ? '<div class="st-icon"></div>' : ''}
+                </div>
+                <div style="position:absolute;bottom:8px;right:8px;font-size:14px;">${c.power || ''}</div>
             `;
             const costBadge = document.createElement('div');
             costBadge.className = 'card-cost';
@@ -579,28 +585,36 @@ function handleCardListResponse(data) {
 
     // メニューの表示制御
     const discardMenu = document.getElementById('viewer-menu-discard');
+    const graveMenu = document.getElementById('viewer-menu-graveyard');
+    const handMenu = document.getElementById('viewer-menu-hand');
+    const bzMenu = document.getElementById('viewer-menu-battlezone');
+    const manaMenu = document.getElementById('viewer-menu-mana');
+
     if (source === 'opponentHand') {
         discardMenu.style.display = 'block';
-        // 他の移動メニューは隠すべきか？とりあえずそのまま（機能しないはずだが念の為隠すとなお良い）
-        document.getElementById('viewer-menu-hand').style.display = 'none';
-        document.getElementById('viewer-menu-battlezone').style.display = 'none';
-        document.getElementById('viewer-menu-mana').style.display = 'none';
-        document.getElementById('viewer-menu-graveyard').style.display = 'none';
+        handMenu.style.display = 'none';
+        bzMenu.style.display = 'none';
+        manaMenu.style.display = 'none';
+        graveMenu.style.display = 'none';
     } else {
         discardMenu.style.display = 'none';
-        document.getElementById('viewer-menu-hand').style.display = 'block';
-        document.getElementById('viewer-menu-battlezone').style.display = 'block';
-        document.getElementById('viewer-menu-mana').style.display = 'block';
-        document.getElementById('viewer-menu-graveyard').style.display = 'block';
+        handMenu.style.display = 'block';
+        bzMenu.style.display = 'block';
+        manaMenu.style.display = 'block';
+        // 既に墓地を表示している場合は「墓地に置く」を隠す
+        graveMenu.style.display = (source === 'grave') ? 'none' : 'block';
     }
 
     cards.forEach((card, index) => {
         const d = document.createElement('div');
         d.className = `card ${card.civilization?.toLowerCase()}`;
         d.innerHTML = `
-            <div style="font-size:9px;">${card.name}</div>
-            ${card.race ? `<div class="card-race" style="font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 1px;">${card.race}</div>` : ''}
-            ${card.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:14px;height:14px;margin-top:2px;"></div>' : ''}
+            <div class="card-name ${card.name && card.name.length >= 8 ? 'small-text' : ''}" style="font-size:10px;">${card.name}</div>
+            ${card.race ? `<div class="card-race" style="font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 12px; text-align: center; width: 100%;">${card.race}</div>` : ''}
+            <div class="card-ability-icons">
+                ${card.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:16px;height:16px;margin-top:4px;"></div>' : ''}
+                ${card.abilities?.includes('S・トリガー') ? '<div class="st-icon" style="width:14px;height:14px;margin-top:6px;"></div>' : ''}
+            </div>
         `;
 
         // 公開ビューかつ他人のカードなら操作無効（ただしopponentHandの場合は操作したい＝捨てさせたい）

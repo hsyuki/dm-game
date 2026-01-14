@@ -170,17 +170,24 @@ class GameManager {
     }
 
     // 墓地の中身を送信
-    requestGraveList(name) {
-        const p = this.findP(name);
-        // 墓地は公開情報なので、誰でも見れるように作ることも可能ですが
-        // 今回はリクエストした本人に送ります
-        this.io.to(p.socketId).emit('cardListResponse', { cards: p.graveyard, source: 'grave' });
+    requestGraveList(data, requesterSocketId) {
+        // data.playerName は墓地の持ち主
+        const owner = this.findP(data.playerName);
+
+        if (owner) {
+            this.io.to(requesterSocketId).emit('cardListResponse', {
+                cards: owner.graveyard,
+                source: 'grave',
+                ownerName: data.playerName,
+                isPublicView: false
+            });
+        }
     }
 
     // デッキサーチの応答も形式を合わせる
-    requestDeckList(name) {
+    requestDeckList(name, requesterSocketId) {
         const p = this.findP(name);
-        this.io.to(p.socketId).emit('cardListResponse', { cards: p.deck, source: 'deck' });
+        this.io.to(requesterSocketId).emit('cardListResponse', { cards: p.deck, source: 'deck' });
     }
 
     // デッキをシャッフルする
@@ -300,18 +307,16 @@ class GameManager {
     }
 
     // 自分の山札を見る
-    viewDeck(playerName) {
+    viewDeck(playerName, requesterSocketId) {
         const p = this.findP(playerName);
         if (p) {
-            // クライアントへ送信。source='deck'
-            // isPublicView=false, ownerName=playerName
             const data = {
                 cards: p.deck,
                 source: 'deck',
                 ownerName: playerName,
                 isPublicView: false
             };
-            this.io.to(p.socketId).emit('cardListResponse', data);
+            this.io.to(requesterSocketId).emit('cardListResponse', data);
         }
     }
 
@@ -329,34 +334,32 @@ class GameManager {
     }
 
     // 対象プレイヤーの手札をリクエスト元に公開
-    viewOpponentHand(requestingPlayerName, targetPlayerName) {
-        const reqP = this.findP(requestingPlayerName);
+    viewOpponentHand(requestingPlayerName, targetPlayerName, requesterSocketId) {
         const targetP = this.findP(targetPlayerName);
 
-        if (reqP && targetP) {
+        if (targetP) {
             const data = {
                 cards: targetP.hand,
                 source: 'opponentHand',
                 ownerName: targetPlayerName,
-                isPublicView: false // 個別の公開なのでpublicViewではない扱いで良いか？ -> クライアント側でopponentHandなら操作可能にするロジックにしたのでOK
+                isPublicView: false
             };
-            this.io.to(reqP.socketId).emit('cardListResponse', data);
+            this.io.to(requesterSocketId).emit('cardListResponse', data);
         }
     }
 
     // 相手の山札を見る
-    viewOpponentDeck(requestingPlayerName, targetPlayerName) {
-        const reqP = this.findP(requestingPlayerName);
+    viewOpponentDeck(requestingPlayerName, targetPlayerName, requesterSocketId) {
         const targetP = this.findP(targetPlayerName);
 
-        if (reqP && targetP) {
+        if (targetP) {
             const data = {
                 cards: targetP.deck,
                 source: 'opponentDeck',
                 ownerName: targetPlayerName,
                 isPublicView: false
             };
-            this.io.to(reqP.socketId).emit('cardListResponse', data);
+            this.io.to(requesterSocketId).emit('cardListResponse', data);
         }
     }
 

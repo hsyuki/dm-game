@@ -16,11 +16,23 @@ let gameManager = null;
 app.use(express.static('src'));
 
 io.on('connection', (socket) => {
-    let role = !players.Player1 ? 'Player1' : (!players.Player2 ? 'Player2' : null);
+    let role = null;
 
-    if (role) {
-        players[role] = new Player(role, socket.id);
-        socket.emit('playerAssigned', { name: role });
+    // ゲーム進行中でない場合のみ、空いている枠に新規プレイヤーを割り当てる
+    if (!gameManager) {
+        if (!players.Player1) {
+            role = 'Player1';
+        } else if (!players.Player2) {
+            role = 'Player2';
+        }
+
+        if (role) {
+            players[role] = new Player(role, socket.id);
+            socket.emit('playerAssigned', { name: role });
+        }
+    } else {
+        // ゲーム進行中の場合、新規接続者には一旦 role を割り当てない（rejoin を待つ）
+        console.log(`New connection ${socket.id} during active game. Waiting for potential rejoin.`);
     }
 
     // ロビー：準備完了
@@ -56,23 +68,46 @@ io.on('connection', (socket) => {
     socket.on('moveTopCard', d => gameManager?.moveTopCard(d.playerName, d.targetZone));
     socket.on('shuffleDeck', d => gameManager?.shuffleDeck(d.playerName));
     socket.on('viewTopCards', d => gameManager?.viewTopCards(d.playerName, d.N, d.isPublic));
-    socket.on('viewDeck', d => gameManager?.viewDeck(d.playerName));
+    socket.on('viewDeck', d => gameManager?.viewDeck(d.playerName, socket.id));
 
-    socket.on('requestGraveList', d => gameManager?.requestGraveList(d.playerName));
+    socket.on('requestGraveList', d => gameManager?.requestGraveList(d, socket.id));
 
     // ハンデス関連
     socket.on('randomDiscard', d => gameManager?.randomDiscard(d.targetPlayerName));
-    socket.on('viewOpponentHand', d => gameManager?.viewOpponentHand(d.requestingPlayerName, d.targetPlayerName));
-    socket.on('viewOpponentDeck', d => gameManager?.viewOpponentDeck(d.requestingPlayerName, d.targetPlayerName));
+    socket.on('viewOpponentHand', d => gameManager?.viewOpponentHand(d.requestingPlayerName, d.targetPlayerName, socket.id));
+    socket.on('viewOpponentDeck', d => gameManager?.viewOpponentDeck(d.requestingPlayerName, d.targetPlayerName, socket.id));
     socket.on('discardAt', d => gameManager?.discardAt(d.targetPlayerName, d.index));
     // 墓地からカードを移動
     socket.on('moveCardFromGrave', d => gameManager?.moveCardFromGrave(d.playerName, d.index, d.targetZone));
 
+    // 再接続（リロード後の復帰）
+    socket.on('rejoin', (data) => {
+        const { playerName } = data;
+        const existingPlayer = players[playerName];
+
+        // 進行中のゲームがあり、そのプレイヤーが現在オフライン（またはIDが違う）なら紐付け直し
+        if (existingPlayer && gameManager) {
+            console.log(`Player ${playerName} rejoining. Updating socketId from ${existingPlayer.socketId} to ${socket.id}`);
+            existingPlayer.socketId = socket.id;
+            role = playerName; // このソケットの役割を確立
+
+            socket.emit('playerAssigned', { name: role });
+            socket.emit('gameStarted'); // ゲーム画面へ遷移させる
+            gameManager.emitState(); // 最新の状態を送信
+        }
+    });
+
     socket.on('disconnect', () => {
         if (role) {
-            players[role] = null;
-            readyStatus[role] = false;
-            io.emit('readyUpdate', readyStatus);
+            // ゲーム進行中でない場合のみ完全に削除
+            // 進行中の場合は null にせず、players[role] を残して再接続を待つ
+            if (!gameManager) {
+                players[role] = null;
+                readyStatus[role] = false;
+                io.emit('readyUpdate', readyStatus);
+            } else {
+                console.log(`Player ${role} disconnected during game. Waiting for rejoin...`);
+            }
         }
     });
 });
