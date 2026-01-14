@@ -6,7 +6,10 @@ const GameManager = require('./GameManager');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+    pingTimeout: 3600000, // 1 hour
+    pingInterval: 25000
+});
 
 let players = { Player1: null, Player2: null };
 let readyStatus = { Player1: false, Player2: false };
