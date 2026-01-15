@@ -284,6 +284,7 @@ class GameManager {
                 // 通常の移動（手札からマナなど）
                 const card = fromZone.splice(index, 1)[0];
                 if (toZone) {
+                    if (fromZoneName === 'shields') card.isTapped = false; // シールドからの移動はアンタップ
                     if (toZoneName === 'shields') card.shieldNum = p.nextShieldNum++;
                     toZone.push(card);
                 }

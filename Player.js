@@ -69,7 +69,12 @@ class Player {
     }
 
     moveShieldToHand(i) {
-        if (this.shields[i]) { this.hand.push(this.shields.splice(i, 1)[0]); return true; }
+        if (this.shields[i]) {
+            const card = this.shields.splice(i, 1)[0];
+            card.isTapped = false;
+            this.hand.push(card);
+            return true;
+        }
         return false;
     }
 

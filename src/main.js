@@ -196,7 +196,7 @@ function renderZone(id, cards, isFace) {
                     ${c.abilities?.includes('ブロッカー') ? '<div class="blocker-icon"></div>' : ''}
                     ${c.abilities?.includes('S・トリガー') ? '<div class="st-icon"></div>' : ''}
                 </div>
-                <div style="position:absolute;bottom:8px;right:8px;font-size:14px;">${c.power || ''}</div>
+                <div class="card-power" style="position:absolute;bottom:8px;right:8px;font-size:14px;">${c.power || ''}</div>
             `;
             const costBadge = document.createElement('div');
             costBadge.className = 'card-cost';
