@@ -99,7 +99,14 @@ function renderGraveyard(elementId, cards) {
     // 墓地なので少し小さく表示するか、そのままか。zone内なのでCSSで縮小されるかも確認。
     // CSS調整なしで一旦そのまま出す。
 
+    let imgHtml = '';
+    if (topCard.imgUrl) {
+        imgHtml = `<img src="${topCard.imgUrl}" class="card-image" alt="${topCard.name}">`;
+        d.classList.add('has-image');
+    }
+
     d.innerHTML = `
+        ${imgHtml}
         <div class="card-name ${topCard.name && topCard.name.length >= 8 ? 'small-text' : ''}" style="font-size:9px;">${topCard.name}</div>
         <div class="card-ability-icons">
             ${topCard.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:14px;height:14px;margin-top:2px;"></div>' : ''}
@@ -175,7 +182,14 @@ function renderZone(id, cards, isFace) {
         cEl.className = `card ${c.civilization?.toLowerCase() || ''} ${c.isTapped ? 'tapped' : ''} ${!isFace ? 'facedown' : ''}`;
 
         if (isFace && c.name) {
+            let imgHtml = '';
+            if (c.imgUrl) {
+                imgHtml = `<img src="${c.imgUrl}" class="card-image" alt="${c.name}">`;
+                cEl.classList.add('has-image');
+            }
+
             cEl.innerHTML = `
+                ${imgHtml}
                 <div class="card-name ${c.name.length >= 8 ? 'small-text' : ''}" style="font-size:10px;">${c.name}</div>
                 ${c.race ? `<div class="card-race" style="font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 12px; text-align: center; width: 100%;">${c.race}</div>` : ''}
                 <div class="card-ability-icons">
@@ -608,7 +622,15 @@ function handleCardListResponse(data) {
     cards.forEach((card, index) => {
         const d = document.createElement('div');
         d.className = `card ${card.civilization?.toLowerCase()}`;
+
+        let imgHtml = '';
+        if (card.imgUrl) {
+            imgHtml = `<img src="${card.imgUrl}" class="card-image" alt="${card.name}">`;
+            d.classList.add('has-image');
+        }
+
         d.innerHTML = `
+            ${imgHtml}
             <div class="card-name ${card.name && card.name.length >= 8 ? 'small-text' : ''}" style="font-size:10px;">${card.name}</div>
             ${card.race ? `<div class="card-race" style="font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 12px; text-align: center; width: 100%;">${card.race}</div>` : ''}
             <div class="card-ability-icons">
@@ -633,6 +655,11 @@ function handleCardListResponse(data) {
                 cardViewerContextMenu.style.display = 'block';
             };
         }
+
+        // ホバーでプレビュー表示
+        d.onmouseenter = () => showPreview(card);
+        d.onmouseleave = () => hidePreview();
+
         deckContents.appendChild(d);
     });
 }
@@ -673,31 +700,76 @@ function showPreview(card) {
     const modal = document.getElementById('preview-modal');
     const nameEl = document.getElementById('pre-name');
     const textEl = document.getElementById('pre-text');
+    let imgEl = document.getElementById('pre-image');
 
     if (!card) return;
 
-    nameEl.innerText = card.name;
-
-    // スペック行（コスト・種族・パワーなどを1行に集約）
-    let specs = [];
-    if (card.cost !== undefined) specs.push(`【${card.cost}】`);
-    if (card.civilization) specs.push(card.civilization);
-    if (card.race) specs.push(card.race);
-    if (card.power) specs.push(`${card.power}`);
-
-    let detailText = specs.join(' / ') + "\n\n";
-
-    // アビリティ部分
-    if (card.abilities && card.abilities.length > 0) {
-        detailText += card.abilities.join('\n');
-    } else {
-        detailText += "(特殊能力なし)";
+    // 画像要素がなければ作成
+    if (!imgEl) {
+        imgEl = document.createElement('img');
+        imgEl.id = 'pre-image';
+        imgEl.className = 'preview-image';
+        modal.appendChild(imgEl);
     }
 
-    textEl.innerText = detailText;
+    if (card.imgUrl) {
+        // 画像がある場合は画像を表示し、テキストを隠す
+        imgEl.src = card.imgUrl;
+        imgEl.style.display = 'block';
+        nameEl.style.display = 'none';
+        textEl.style.display = 'none';
+    } else {
+        // 画像がない場合はテキストを表示し、画像を隠す
+        imgEl.style.display = 'none';
+        nameEl.style.display = 'block';
+        textEl.style.display = 'block';
+
+        nameEl.innerText = card.name;
+
+        // スペック行（コスト・種族・パワーなどを1行に集約）
+        let specs = [];
+        if (card.cost !== undefined) specs.push(`【${card.cost}】`);
+        if (card.civilization) specs.push(card.civilization);
+        if (card.race) specs.push(card.race);
+        if (card.power) specs.push(`${card.power}`);
+
+        let detailText = specs.join(' / ') + "\n\n";
+
+        // アビリティ部分
+        if (card.abilities && card.abilities.length > 0) {
+            detailText += card.abilities.join('\n');
+        } else {
+            detailText += "(特殊能力なし)";
+        }
+
+        textEl.innerText = detailText;
+    }
+
     modal.style.display = 'block';
 }
 function hidePreview() { document.getElementById('preview-modal').style.display = 'none'; }
+
+// マウス追従ロジック
+document.addEventListener('mousemove', (e) => {
+    const modal = document.getElementById('preview-modal');
+    if (modal.style.display === 'block') {
+        const offset = 15; // カーソルからの距離
+        let left = e.clientX + offset;
+        let top = e.clientY + offset;
+
+        // 画面端の調整
+        const rect = modal.getBoundingClientRect();
+        if (left + rect.width > window.innerWidth) {
+            left = e.clientX - rect.width - offset;
+        }
+        if (top + rect.height > window.innerHeight) {
+            top = e.clientY - rect.height - offset;
+        }
+
+        modal.style.left = `${left}px`;
+        modal.style.top = `${top}px`;
+    }
+});
 
 // --- グローバルなドラッグ＆ドロップハンドラの設定 ---
 function setupGlobalDropHandlers() {

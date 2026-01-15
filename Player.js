@@ -30,7 +30,8 @@ class Player {
                     def.cost,
                     def.power,
                     def.abilities,
-                    def.isEvolution || false
+                    def.isEvolution || false,
+                    def.imgUrl || ""
                 ));
             } else {
                 console.warn(`Card definition not found for: ${cardName}`);
