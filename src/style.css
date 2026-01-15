@@ -65,6 +65,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    min-width: 0;
 }
 
 /* Reduced gap */
@@ -97,6 +98,7 @@ body {
     flex-wrap: wrap;
     border-radius: 10px;
     border: 1px dashed #444;
+    min-width: 0;
 }
 
 #p1-area #p1-battle-zone,
@@ -117,8 +119,14 @@ body {
 
 #p1-mana-zone,
 #p2-mana-zone {
-    height: calc(var(--card-height) + 15px);
-    /* マナゾーンの高さをカードと同じに設定 */
+    height: calc(var(--card-height) + 25px);
+    /* スクロールバー分確保 */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    justify-content: flex-start;
+    align-items: center;
+    max-width: 100%;
 }
 
 #p1-hand-zone,
