@@ -1,11 +1,6 @@
 :root {
     --card-width: 100px;
     --card-height: 140px;
-    --fire: #ff4757;
-    --water: #1e90ff;
-    --nature: #2ed573;
-    --light: #f1c40f;
-    --darkness: #8e44ad;
     --card-stack-offset: 50px;
 }
 
@@ -49,16 +44,7 @@ body {
     flex-direction: column-reverse;
 }
 
-/* ゾーンのタイトル位置を微調整（重なり防止） */
-.zone-title {
-    position: absolute;
-    top: 6px;
-    left: 12px;
-    font-size: 11px;
-    color: #888;
-    font-weight: bold;
-    z-index: 10;
-}
+
 
 .zones-container {
     flex: 1;
@@ -151,11 +137,8 @@ body {
     border-radius: 8px;
     cursor: grab;
     position: relative;
-    padding: 18px 10px 10px;
-    font-size: 10px;
-    font-weight: bold;
-    box-sizing: border-box;
     background: #333;
+    border: 1px solid #555;
 }
 
 .card-name {
@@ -192,20 +175,12 @@ body {
     /* 枠色を黒に統一 */
 }
 
-.card.has-image .card-name,
-.card.has-image .card-power,
-.card.has-image .card-cost,
-.card.has-image .card-race,
-.card.has-image .card-ability-icons {
+.card.has-image .card-name {
     display: none;
 }
 
 /* 視認性確保のための縁取り */
-.card-name,
-.card-power,
-.card-cost,
-.card-race,
-.card-ability-icons {
+.card-name {
     position: relative;
     z-index: 10;
     text-shadow:
@@ -231,61 +206,7 @@ body {
     font-size: 8px !important;
 }
 
-/* --- Blocker Icon --- */
-.blocker-icon {
-    width: 16px;
-    height: 16px;
-    background-color: #000;
-    border: 1px solid #444;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 4px;
-    position: relative;
-    border-radius: 2px;
-}
 
-.blocker-icon::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background-color: #a0d8ef;
-    border-radius: 50%;
-    box-shadow: 0 0 5px rgba(160, 216, 239, 0.6);
-}
-
-/* --- S-Trigger Icon --- */
-.st-icon {
-    width: 14px;
-    height: 14px;
-    background-color: #000;
-    border: 1px solid #660;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 6px;
-    position: relative;
-    transform: rotate(45deg);
-    border-radius: 1px;
-}
-
-.st-icon::after {
-    content: '⚡';
-    font-size: 10px;
-    color: #ffd700;
-    transform: rotate(-45deg);
-    display: block;
-    line-height: 1;
-    text-shadow: 0 0 3px rgba(255, 215, 0, 0.8);
-}
-
-/* 複数のアイコンが並ぶ場合のコンテナ用 */
-.card-ability-icons {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-}
 
 /* コストバッジの基本スタイル */
 .card-cost {
@@ -307,64 +228,36 @@ body {
     border: 1px solid #fff;
 }
 
-/* 文明ごとの色指定 */
-.card.fire .card-cost {
-    background: #e74c3c;
-    border-color: #ff7675;
-}
 
-/* 赤 */
-.card.water .card-cost {
-    background: #2980b9;
-    border-color: #74b9ff;
-}
-
-/* 青 */
-.card.nature .card-cost {
-    background: #27ae60;
-    border-color: #55efc4;
-}
-
-/* 緑 */
-.card.darkness .card-cost {
-    background: #2d3436;
-    border-color: #636e72;
-}
-
-/* 黒 */
-.card.light .card-cost {
-    background: #f1c40f;
-    border-color: #000;
-    color: #000;
-}
-
-/* 黄色 (文字は黒) */
-
-.card.fire {
-    border: 2px solid var(--fire);
-}
-
-.card.water {
-    border: 2px solid var(--water);
-}
-
-.card.nature {
-    border: 2px solid var(--nature);
-}
-
-.card.light {
-    border: 2px solid var(--light);
-    color: #000;
-}
-
-.card.darkness {
-    border: 2px solid var(--darkness);
-}
 
 .card.tapped {
     transform: rotate(90deg);
     margin: 0 15px;
     filter: brightness(0.7);
+}
+
+/* マナゾーンのカードは180度回転（上下逆さま） */
+[id*="mana-zone"] .card {
+    transform: rotate(180deg);
+}
+
+/* マナゾーンでタップされている場合は、270度回転 */
+[id*="mana-zone"] .card.tapped {
+    transform: rotate(270deg);
+}
+
+/* 手札のカードはタップされていても回転させない */
+[id*="hand-zone"] .card.tapped {
+    transform: none;
+    margin: 0;
+    filter: none;
+}
+
+
+/* 進化カードのハイライト */
+.card.evolved {
+    border: 2px solid #f1c40f !important;
+    box-shadow: 0 0 10px #f1c40f, 0 0 20px rgba(241, 196, 15, 0.4);
 }
 
 .card.facedown {
@@ -376,9 +269,7 @@ body {
     color: transparent !important;
 }
 
-.card.facedown .card-cost {
-    display: none;
-}
+
 
 /* 裏向きならコストは隠す */
 

@@ -47,6 +47,19 @@ socket.on('gameStarted', () => {
 socket.on('gameStateUpdate', state => render(state));
 socket.on('privateState', d => renderZone('p1-hand-zone', d.hand, true));
 
+// ゲームリセット応答
+socket.on('gameReset', () => {
+    alert("ゲームが終了しました。ロビーに戻ります。");
+    location.reload();
+});
+
+// 終了ボタン
+document.getElementById('reset-btn').onclick = () => {
+    if (confirm("本当にゲームを終了しますか？")) {
+        socket.emit('resetGame');
+    }
+};
+
 function render(state) {
     hidePreview(); // カードが動いたときに詳細ポップアップを消す
     const my = localName === 'Player1' ? state.p1 : state.p2;
@@ -95,43 +108,21 @@ function renderGraveyard(elementId, cards) {
 
     // カード描画
     const d = document.createElement('div');
-    d.className = `card ${topCard.civilization?.toLowerCase()}`;
+    d.className = `card ${topCard.isTapped ? 'tapped' : ''}`;
     // 墓地なので少し小さく表示するか、そのままか。zone内なのでCSSで縮小されるかも確認。
     // CSS調整なしで一旦そのまま出す。
 
     let imgHtml = '';
     if (topCard.imgUrl) {
-        imgHtml = `<img src="${topCard.imgUrl}" class="card-image" alt="${topCard.name}">`;
+        // 画像がある場合は画像のみ
         d.classList.add('has-image');
+        d.innerHTML = `<img src="${topCard.imgUrl}" class="card-image" alt="${topCard.name}">`;
+    } else {
+        // 画像がない場合はテキスト情報
+        d.innerHTML = `
+            <div class="card-name ${topCard.name && topCard.name.length >= 8 ? 'small-text' : ''}" style="font-size:9px;">${topCard.name}</div>
+        `;
     }
-
-    d.innerHTML = `
-        ${imgHtml}
-        <div class="card-name ${topCard.name && topCard.name.length >= 8 ? 'small-text' : ''}" style="font-size:9px;">${topCard.name}</div>
-        <div class="card-ability-icons">
-            ${topCard.abilities?.includes('ブロッカー') ? '<div class="blocker-icon" style="width:14px;height:14px;margin-top:2px;"></div>' : ''}
-            ${topCard.abilities?.includes('S・トリガー') ? '<div class="st-icon" style="width:12px;height:12px;margin-top:3px;"></div>' : ''}
-        </div>
-        <div style="position:absolute;bottom:4px;right:4px;font-size:12px;">${topCard.power || ''}</div>
-    `;
-
-    // 枚数バッジ
-    const countBadge = document.createElement('div');
-    countBadge.innerText = cards.length;
-    countBadge.style.position = 'absolute';
-    countBadge.style.bottom = '-5px';
-    countBadge.style.right = '-5px';
-    countBadge.style.background = '#333';
-    countBadge.style.color = '#fff';
-    countBadge.style.borderRadius = '50%';
-    countBadge.style.width = '20px';
-    countBadge.style.height = '20px';
-    countBadge.style.fontSize = '12px';
-    countBadge.style.display = 'flex';
-    countBadge.style.alignItems = 'center';
-    countBadge.style.justifyContent = 'center';
-    countBadge.style.border = '1px solid #777';
-    countBadge.style.zIndex = '10'; // カードの上
 
     // クリックで一覧表示イベント (既存のonclick機能はindex.html等で定義されている？ -> main.jsのグローバルにはない。index.htmlのonclick属性か？)
     // 既存のHTMLでは `onclick="socket.emit('requestGraveList', ...)"` だった。
@@ -162,6 +153,22 @@ function renderGraveyard(elementId, cards) {
     d.onmouseenter = () => showPreview(topCard);
     d.onmouseleave = () => hidePreview();
 
+    // 枚数バッジ
+    const countBadge = document.createElement('div');
+    countBadge.className = 'grave-count-badge';
+    countBadge.innerText = cards.length;
+    countBadge.style.position = "absolute";
+    countBadge.style.bottom = "5px";
+    countBadge.style.right = "5px";
+    countBadge.style.background = "rgba(0,0,0,0.7)";
+    countBadge.style.color = "white";
+    countBadge.style.padding = "2px 6px";
+    countBadge.style.borderRadius = "10px";
+    countBadge.style.fontSize = "12px";
+    countBadge.style.fontWeight = "bold";
+    countBadge.style.zIndex = "10";
+    countBadge.style.pointerEvents = "none";
+
     el.appendChild(d);
     el.appendChild(countBadge);
 }
@@ -179,30 +186,20 @@ function renderZone(id, cards, isFace) {
 
     cards.forEach((c, i) => {
         const cEl = document.createElement('div');
-        cEl.className = `card ${c.civilization?.toLowerCase() || ''} ${c.isTapped ? 'tapped' : ''} ${!isFace ? 'facedown' : ''}`;
+        cEl.className = `card ${c.isTapped ? 'tapped' : ''} ${!isFace ? 'facedown' : ''} ${c.evolvesFrom ? 'evolved' : ''}`;
 
         if (isFace && c.name) {
-            let imgHtml = '';
             if (c.imgUrl) {
-                imgHtml = `<img src="${c.imgUrl}" class="card-image" alt="${c.name}">`;
+                // 画像がある場: 画像のみ表示（テキスト情報は生成しない）
                 cEl.classList.add('has-image');
+                cEl.innerHTML = `<img src="${c.imgUrl}" class="card-image" alt="${c.name}">`;
+                // コストバッジも画像にあると仮定して非表示（必要なら復活させる）
+            } else {
+                // 画像がない場合: テキスト情報を表示
+                cEl.innerHTML = `
+                    <div class="card-name ${c.name.length >= 8 ? 'small-text' : ''}" style="font-size:10px;">${c.name}</div>
+                `;
             }
-
-            cEl.innerHTML = `
-                ${imgHtml}
-                <div class="card-name ${c.name.length >= 8 ? 'small-text' : ''}" style="font-size:10px;">${c.name}</div>
-                ${c.race ? `<div class="card-race" style="font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 12px; text-align: center; width: 100%;">${c.race}</div>` : ''}
-                <div class="card-ability-icons">
-                    ${c.abilities?.includes('ブロッカー') ? '<div class="blocker-icon"></div>' : ''}
-                    ${c.abilities?.includes('S・トリガー') ? '<div class="st-icon"></div>' : ''}
-                </div>
-                <div class="card-power" style="position:absolute;bottom:8px;right:8px;font-size:14px;">${c.power || ''}</div>
-            `;
-            const costBadge = document.createElement('div');
-            costBadge.className = 'card-cost';
-            costBadge.innerText = c.cost !== undefined ? c.cost : '?';
-            if (c.isTapped) costBadge.style.transform = "rotate(-90deg)";
-            cEl.appendChild(costBadge);
 
             if (id.includes('mana-zone') || id.includes('battle-zone')) {
                 cEl.onclick = (e) => {
@@ -565,6 +562,15 @@ oppMenuViewDeck.onclick = () => {
     document.getElementById('opponent-deck-context-menu').style.display = 'none';
 };
 
+const oppMenuAllDiscard = document.getElementById('opp-menu-all-discard');
+oppMenuAllDiscard.onclick = () => {
+    if (confirm("相手の手札を全て捨てさせますか？")) {
+        const targetPlayerName = localName === 'Player1' ? 'Player2' : 'Player1';
+        socket.emit('discardAll', { targetPlayerName });
+        oppHandMenu.style.display = 'none';
+    }
+};
+
 oppMenuRandomDiscard.onclick = () => {
     // ターゲットプレイヤー名の特定
     const targetPlayerName = localName === 'Player1' ? 'Player2' : 'Player1';
@@ -725,24 +731,7 @@ function showPreview(card) {
         textEl.style.display = 'block';
 
         nameEl.innerText = card.name;
-
-        // スペック行（コスト・種族・パワーなどを1行に集約）
-        let specs = [];
-        if (card.cost !== undefined) specs.push(`【${card.cost}】`);
-        if (card.civilization) specs.push(card.civilization);
-        if (card.race) specs.push(card.race);
-        if (card.power) specs.push(`${card.power}`);
-
-        let detailText = specs.join(' / ') + "\n\n";
-
-        // アビリティ部分
-        if (card.abilities && card.abilities.length > 0) {
-            detailText += card.abilities.join('\n');
-        } else {
-            detailText += "(特殊能力なし)";
-        }
-
-        textEl.innerText = detailText;
+        textEl.innerText = "(詳細データなし)";
     }
 
     modal.style.display = 'block';

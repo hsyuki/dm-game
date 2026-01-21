@@ -162,6 +162,7 @@ class GameManager {
 
             // targetZoneは 'manaZone', 'battleZone', 'graveyard' など
             if (p[targetZone]) {
+                if (targetZone === 'hand') card.isTapped = false;
                 if (targetZone === 'shields') card.shieldNum = p.nextShieldNum++;
                 p[targetZone].push(card);
             }
@@ -222,6 +223,7 @@ class GameManager {
             const card = p.graveyard.splice(index, 1)[0]; // 墓地から抜く
 
             if (p[targetZone]) {
+                if (targetZone === 'hand') card.isTapped = false;
                 if (targetZone === 'shields') card.shieldNum = p.nextShieldNum++;
                 p[targetZone].push(card);
             }
@@ -284,7 +286,7 @@ class GameManager {
                 // 通常の移動（手札からマナなど）
                 const card = fromZone.splice(index, 1)[0];
                 if (toZone) {
-                    if (fromZoneName === 'shields') card.isTapped = false; // シールドからの移動はアンタップ
+                    if (toZoneName === 'hand' || fromZoneName === 'shields') card.isTapped = false; // 手札に戻るかシールドからの移動はアンタップ
                     if (toZoneName === 'shields') card.shieldNum = p.nextShieldNum++;
                     toZone.push(card);
                 }
@@ -370,6 +372,19 @@ class GameManager {
         if (p && p.hand[index]) {
             const card = p.hand.splice(index, 1)[0];
             p.graveyard.push(card);
+            this.emitState();
+        }
+    }
+
+    // 全ての手札を墓地へ（全ハンデス用）
+    discardAll(targetPlayerName) {
+        const p = this.findP(targetPlayerName);
+        if (p && p.hand.length > 0) {
+            while (p.hand.length > 0) {
+                const card = p.hand.pop();
+                card.isTapped = false;
+                p.graveyard.push(card);
+            }
             this.emitState();
         }
     }

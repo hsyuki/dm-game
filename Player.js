@@ -25,12 +25,6 @@ class Player {
                     gId++,
                     def.name,
                     def.type,
-                    def.race,
-                    def.civilization,
-                    def.cost,
-                    def.power,
-                    def.abilities,
-                    def.isEvolution || false,
                     def.imgUrl || ""
                 ));
             } else {

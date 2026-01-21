@@ -22,8 +22,29 @@ io.on('connection', (socket) => {
     let role = !players.Player1 ? 'Player1' : (!players.Player2 ? 'Player2' : null);
 
     if (role) {
-        players[role] = new Player(role, socket.id);
+        if (gameManager) {
+            // ゲーム進行中は既存のプレイヤーインスタンスを再利用してSocket IDを更新
+            const existingPlayer = gameManager.findP(role);
+            if (existingPlayer) {
+                existingPlayer.socketId = socket.id;
+                players[role] = existingPlayer; // server.js側の参照を復旧
+                console.log(`Reconnected: ${role} (Socket: ${socket.id})`);
+            } else {
+                // 万が一見つからない場合
+                players[role] = new Player(role, socket.id);
+            }
+        } else {
+            // ゲーム開始前なら新規作成
+            players[role] = new Player(role, socket.id);
+        }
+
         socket.emit('playerAssigned', { name: role });
+        io.emit('readyUpdate', readyStatus);
+
+        // ゲーム中なら現状を即座に送信してあげる
+        if (gameManager) {
+            gameManager.emitState();
+        }
     }
 
     // ロビー：準備完了
@@ -68,9 +89,17 @@ io.on('connection', (socket) => {
     socket.on('viewOpponentHand', d => gameManager?.viewOpponentHand(d.requestingPlayerName, d.targetPlayerName, socket.id));
     socket.on('viewOpponentDeck', d => gameManager?.viewOpponentDeck(d.requestingPlayerName, d.targetPlayerName, socket.id));
     socket.on('discardAt', d => gameManager?.discardAt(d.targetPlayerName, d.index));
+    socket.on('discardAll', d => gameManager?.discardAll(d.targetPlayerName));
     // 墓地からカードを移動
     // 墓地からカードを移動
     socket.on('moveCardFromGrave', d => gameManager?.moveCardFromGrave(d.playerName, d.index, d.targetZone));
+
+    // ゲーム終了・リセット
+    socket.on('resetGame', () => {
+        gameManager = null;
+        readyStatus = { Player1: false, Player2: false };
+        io.emit('gameReset');
+    });
 
     socket.on('disconnect', () => {
         if (role) {
