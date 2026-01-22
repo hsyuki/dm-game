@@ -30,6 +30,16 @@ const CardDefinitions = {
         type: "Creature",
         imgUrl: "/img/dm06-s08.webp"
     },
+    "紅神龍ジャガルザー": {
+        name: "紅神龍ジャガルザー",
+        type: "Creature",
+        imgUrl: "/img/dm08-004.webp"
+    },
+    "クリムゾン・チャージャー": {
+        name: "クリムゾン・チャージャー",
+        type: "Spell",
+        imgUrl: "/img/dm08-032.webp"
+    },
 
     // --- 水文明 (Water) ---
     "アクア・ガード": {
@@ -65,27 +75,27 @@ const CardDefinitions = {
     "エメラル": {
         name: "エメラル",
         type: "Creature",
-        imgUrl: ""
+        imgUrl: "/img/dmc66-036.webp"
     },
     "ストリーミング・シェイパー": {
         name: "ストリーミング・シェイパー",
         type: "Spell",
-        imgUrl: ""
+        imgUrl: "/img/dmx21-053.webp"
     },
     "クリスタル・パラディン": {
         name: "クリスタル・パラディン",
         type: "Evolution Creature",
         imgUrl: "/img/dmc42-004.webp"
     },
-    "クリスタル_ランサー": {
+    "クリスタル・ランサー": {
         name: "クリスタル・ランサー",
         type: "Evolution Creature",
-        imgUrl: ""
+        imgUrl: "/img/dmc42-021.webp"
     },
     "クリスタル・メモリー": {
         name: "クリスタル・メモリー",
         type: "Spell",
-        imgUrl: ""
+        imgUrl: "/img/dm01-022.webp"
     },
     "サイバー・ブレイン": {
         name: "サイバー・ブレイン",
@@ -106,6 +116,16 @@ const CardDefinitions = {
         name: "コーライル",
         type: "Creature",
         imgUrl: "/img/dmc27-040.webp"
+    },
+    "グレープ・ジェリー": {
+        name: "グレープ・ジェリー",
+        type: "Creature",
+        imgUrl: "/img/dm08-042.webp"
+    },
+    "ブレイン・チャージャー": {
+        name: "ブレイン・チャージャー",
+        type: "Spell",
+        imgUrl: "/img/dm08-043.webp"
     },
 
     // --- 自然文明 (Nature) ---
@@ -149,6 +169,11 @@ const CardDefinitions = {
         type: "Creature",
         imgUrl: "/img/dm07-019.webp"
     },
+    "ラブ・エルフィン": {
+        name: "ラブ・エルフィン",
+        type: "Creature",
+        imgUrl: "/img/dm02-054.webp"
+    },
 
     // --- 闇文明 ---
     "デーモン・ハンド": {
@@ -171,7 +196,7 @@ const CardDefinitions = {
     "ホーリー・スパーク": {
         name: "ホーリー・スパーク",
         type: "Spell",
-        imgUrl: ""
+        imgUrl: "/img/dm01-015.webp"
     },
 };
 
