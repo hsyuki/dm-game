@@ -127,6 +127,21 @@ const CardDefinitions = {
         type: "Spell",
         imgUrl: "/img/dm08-043.webp"
     },
+    "アクアン": {
+        name: "アクアン",
+        type: "Creature",
+        imgUrl: "/img/dm04-010.webp"
+    },
+    "エナジー・ライト": {
+        name: "エナジー・ライト",
+        type: "Spell",
+        imgUrl: "/img/dmd24-032.webp"
+    },
+    "ハイドロ・ハリケーン": {
+        name: "ハイドロ・ハリケーン",
+        type: "Spell",
+        imgUrl: "/img/dmc27-010.webp"
+    },
 
     // --- 自然文明 (Nature) ---
     "フェアリー・ライフ": {
@@ -191,12 +206,142 @@ const CardDefinitions = {
         type: "Spell",
         imgUrl: "/img/card73709482_1.jpg"
     },
+    "スケルトン・バイス": {
+        name: "スケルトン・バイス",
+        type: "Spell",
+        imgUrl: "/img/dm08-014.webp"
+    },
+    "ロスト・チャージャー": {
+        name: "ロスト・チャージャー",
+        type: "Spell",
+        imgUrl: "/img/dm09-014.webp"
+    },
+    "荒廃の巨王ジェノサイド": {
+        name: "荒廃の巨王ジェノサイド",
+        type: "Creature",
+        imgUrl: "/img/dmc27-012.webp"
+    },
+    "ねじれる者ボーン・スライム": {
+        name: "ねじれる者ボーン・スライム",
+        type: "Creature",
+        imgUrl: "/img/dm02-046.webp"
+    },
+    "孤独の影ロンリー・ウォーカー": {
+        name: "孤独の影ロンリー・ウォーカー",
+        type: "Creature",
+        imgUrl: "/img/dm18-117.webp"
+    },
+    "飛行男": {
+        name: "飛行男",
+        type: "Creature",
+        imgUrl: "/img/dmc27-045.webp"
+    },
+    "卵胞虫ゼリー・ワーム": {
+        name: "卵胞虫ゼリー・ワーム",
+        type: "Creature",
+        imgUrl: "/img/dmc61-073.webp"
+    },
+    "機怪人形ガチャック": {
+        name: "機怪人形ガチャック",
+        type: "Creature",
+        imgUrl: "/img/dm08-028.webp"
+    },
+    "スネークアタック": {
+        name: "スネークアタック",
+        type: "Spell",
+        imgUrl: "/img/dm03-047.webp"
+    },
+    "呪いの影シャドウ・ムーン": {
+        name: "呪いの影シャドウ・ムーン",
+        type: "Creature",
+        imgUrl: "/img/dm04-046.webp"
+    },
 
     // --- 光文明 ---
     "ホーリー・スパーク": {
         name: "ホーリー・スパーク",
         type: "Spell",
         imgUrl: "/img/dm01-015.webp"
+    },
+    "鎮圧の使徒サリエス": {
+        name: "鎮圧の使徒サリエス",
+        type: "Creature",
+        imgUrl: "/img/dm04-039.webp"
+    },
+    "電磁の使徒バルアス": {
+        name: "電磁の使徒バルアス",
+        type: "Creature",
+        imgUrl: "/img/dm18-096.webp"
+    },
+    "雷光の使徒ミール": {
+        name: "雷光の使徒ミール",
+        type: "Creature",
+        imgUrl: "/img/dm01-073.webp"
+    },
+    "光器ペトローバ": {
+        name: "光器ペトローバ",
+        type: "Creature",
+        imgUrl: "/img/dmd26-004.webp"
+    },
+    "雷鳴の守護者ミスト・リエス": {
+        name: "雷鳴の守護者ミスト・リエス",
+        type: "Creature",
+        imgUrl: "/img/dmc27-021.webp"
+    },
+    "聖天使クラウゼ・バルキューラ": {
+        name: "聖天使クラウゼ・バルキューラ",
+        type: "Creature",
+        imgUrl: "/img/dmc42-003.webp"
+    },
+    "蒼天の守護者ラ・ウラ・ギガ": {
+        name: "蒼天の守護者ラ・ウラ・ギガ",
+        type: "Creature",
+        imgUrl: "/img/dm01-076.webp"
+    },
+    "日輪の守護者ソル・ガーラ": {
+        name: "日輪の守護者ソル・ガーラ",
+        type: "Creature",
+        imgUrl: "/img/dm08-038.webp"
+    },
+    "守護聖天ラルバ・ギア": {
+        name: "守護聖天ラルバ・ギア",
+        type: "Creature",
+        imgUrl: "/img/dmc61-036.webp"
+    },
+    "時空の守護者ジル・ワーカ": {
+        name: "時空の守護者ジル・ワーカ",
+        type: "Creature",
+        imgUrl: "/img/dmc61-061.webp"
+    },
+    "守護聖天グレナ・ビューレ": {
+        name: "守護聖天グレナ・ビューレ",
+        type: "Creature",
+        imgUrl: "/img/dm09-001.webp"
+    },
+    "暁の守護者ファル・イーガ": {
+        name: "暁の守護者ファル・イーガ",
+        type: "Creature",
+        imgUrl: "/img/dm02-006.webp"
+    },
+    "碧玉草": {
+        name: "碧玉草",
+        type: "Creature",
+        imgUrl: "/img/dm01-074.webp"
+    },
+    "翡翠樹": {
+        name: "翡翠樹",
+        type: "Creature",
+        imgUrl: "/img/dm01-071.webp"
+    },
+    "竜巻草": {
+        name: "竜巻草",
+        type: "Creature",
+        imgUrl: "/img/dm02-008.webp"
+    },
+    "ダイヤモンド・カッター": {
+        name: "ダイヤモンド・カッター",
+        type: "Spell",
+        imgUrl: "/img/dm18-057.webp"
     },
 };
 
